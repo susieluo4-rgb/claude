@@ -52,7 +52,7 @@ def find_row(*keywords):
     return None
 
 # ─── ESG.txt ─────────────────────────────────────────
-with open(os.environ.get("SCORE_ESG", os.path.join(BASE,"ESG - 2026-04-08T105030.139.txt")),encoding="utf-8") as f:
+with open(os.environ.get("SCORE_ESG", os.path.join(BASE,"ESG - 2026-04-08T172837.563.txt")),encoding="utf-8") as f:
     esg=f.read()
 
 # 1. ESG基础数据
@@ -132,7 +132,7 @@ for short,h in ALL_HEADINGS.items():
         line_end = esg.find('\n', pos)
         if line_end == -1: line_end = pos + 200
         heading_line = esg[pos:line_end]
-        em_m = re.search(r'【Exposure:\s*(\d+(?:\.\d+)?)[，,]\s*Management:\s*(\d+(?:\.\d+)?)】', heading_line)
+        em_m = re.search(r'【Exposure:\s*(\d+)分?[，,]\s*Management:\s*(\d+)分?】', heading_line)
         if em_m:
             esgc_scores[short] = (float(em_m.group(1)), float(em_m.group(2)))
         # S维度：提取理由和结论
@@ -178,14 +178,14 @@ for k,v in esgc_scores.items():
     print(f"  {k}: E={v[0]} M={v[1]}")
 
 # ─── Industry.txt ─────────────────────────────────────
-with open(os.environ.get("SCORE_IND", os.path.join(BASE,"Industry - 2026-04-08T104953.469.txt")),encoding="utf-8") as f:
+with open(os.environ.get("SCORE_IND", os.path.join(BASE,"Industry - 2026-04-08T172927.632.txt")),encoding="utf-8") as f:
     ind=f.read()
 
 ind_vals={}
-def icagr(b,pat='未来 3 年预期增速'):
+def icagr(b, pat=r'未来\s*3\s*年预期增速'):
     if b is None: return None
-    m=re.search(rf'{re.escape(pat)}.*?(\d+(?:\.\d+)?)\s*%',b)
-    return round(float(m.group(1))/100,4) if m else None
+    m = re.search(pat + r'.*?(\d+(?:\.\d+)?)\s*%', b)
+    return round(float(m.group(1))/100, 4) if m else None
 
 def sval(b,kw):
     if b is None: return None
@@ -194,8 +194,8 @@ def sval(b,kw):
 
 # ── 行业 Block 定义（最多支持5个，请根据目标公司修改关键字）─────────
 INDUSTRY_HEADERS = [
-    ('# 中芯国际 集成电路晶圆代工行业分析报告',      ['# 中芯国际（半导体制造业）行业分析报告']),
-    ('# 中芯国际（半导体制造业）行业分析报告',        ['$$']),
+    ('# 寒武纪云端智能芯片及加速卡行业分析报告',      ['# 寒武纪（人工智能芯片）行业分析报告']),
+    ('# 寒武纪（人工智能芯片）行业分析报告',          ['$$']),
     ('# 第3个行业报告标题（如有）',                  ['$$']),
     ('# 第4个行业报告标题（如有）',                  ['$$']),
     ('# 第5个行业报告标题（如有）',                  ['$$']),
@@ -228,7 +228,7 @@ for ind_idx in range(1, actual_industry_count + 1):
         if m: ind_vals[(ind_idx,'mkt_size')]=round(float(m.group(1).replace('，','').replace(',',''))*100)
 
 # ─── Porter.txt ──────────────────────────────────────
-with open(os.environ.get("SCORE_PORT", os.path.join(BASE,"Portet Model - 2026-04-08T105008.470.txt")),encoding="utf-8") as f:
+with open(os.environ.get("SCORE_PORT", os.path.join(BASE,"Portet Model - 2026-04-08T172917.700.txt")),encoding="utf-8") as f:
     port=f.read()
 
 port_vals={}
@@ -239,8 +239,8 @@ def pscore(b,kw):
 
 # ── Porter Block 定义（最多支持5个，与 Industry 顺序对应）─────────
 PORTER_HEADERS = [
-    ('**中芯国际 集成电路晶圆代工 竞争力分析报告**', ['**中芯国际 其他 竞争力分析报告**', '$$']),
-    ('**中芯国际 其他 竞争力分析报告**',             ['$$']),
+    ('**寒武纪云端智能芯片及加速卡 竞争力分析报告**', ['**寒武纪 其他（AI芯片设计） 竞争力分析报告**', '$$']),
+    ('**寒武纪 其他（AI芯片设计） 竞争力分析报告**', ['$$']),
     ('第3个行业竞争力分析报告',   ['$$']),
     ('第4个行业竞争力分析报告',   ['$$']),
     ('第5个行业竞争力分析报告',   ['$$']),
@@ -362,7 +362,7 @@ for ind_idx, block in ind_blocks.items():
     if cmt: mkt_comments[ind_idx] = cmt
 
 # ─── QL&RF.txt ───────────────────────────────────────
-with open(os.environ.get("SCORE_QL", os.path.join(BASE,"QL&RF - 2026-04-08T105019.270.txt")),encoding="utf-8") as f:
+with open(os.environ.get("SCORE_QL", os.path.join(BASE,"QL&RF - 2026-04-08T172901.747.txt")),encoding="utf-8") as f:
     ql=f.read()
 
 # 从QL&RF.txt风险表格中解析所有风险项
@@ -401,9 +401,12 @@ section_headers = [
     '#### **第四部分：资本运作与公司治理风险**',
     # 格式B：#### **一、xxx**（冒号后无空格，加顿号）
     '#### **一、 地缘政治与供应链安全风险**',
+    '#### **一、 地缘政治与供应链风险**',
     '#### **二、 运营与财务风险**',
+    '#### **二、 公司治理与财务运作风险**',
     '#### **三、 汇率与融资风险**',
     '#### **四、 公司治理与资本运作风险**',
+    '#### **四、 并购与商誉风险**',
 ]
 for hdr in section_headers:
     block = parse_ql_table_block(ql, hdr)
@@ -519,7 +522,7 @@ for en_pat,v in [
 # Ticker（行66）
 ticker_row = find_row('Ticker')
 if ticker_row:
-    fills[ticker_row] = ('688981.SH', None)
+    fills[ticker_row] = ('688256.SH', None)
 
 # ESGC：I/J写入分数，评论暂存待后续写入L列
 esg_l_fills={}   # {row: comment}
