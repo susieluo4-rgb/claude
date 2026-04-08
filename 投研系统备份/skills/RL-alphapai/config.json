@@ -1,0 +1,10 @@
+{
+  "_comment": "RL-AlphaPai 封装包，底层调用复用 alphapai-research 的 API Key",
+  "parent_skill": "alphapai-research",
+  "config_source": "~/.claude/skills/alphapai-research/config.json",
+  "rl_watchlist": {
+    "group": "RL",
+    "stock_count": 63,
+    "last_updated": "2026-04-07"
+  }
+}

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>航宇科技（688239.SH）投研报告 - 2026-04-07</title>
+    <style>
+        :root {
+            --primary: #1a56db;
+            --secondary: #6b7280;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--card-bg); border-right: 1px solid var(--border); position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 16px; font-weight: 600; color: var(--primary); }
+        .sidebar-header .subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .nav { padding: 16px 0; }
+        .nav-item { display: block; padding: 10px 20px; color: var(--text-muted); text-decoration: none; font-size: 14px; cursor: pointer; border-left: 3px solid transparent; }
+        .nav-item:hover { background: #f3f4f6; color: var(--text); }
+        .nav-item.active { background: #eff6ff; color: var(--primary); border-left-color: var(--primary); font-weight: 500; }
+        .main { flex: 1; margin-left: 280px; padding: 32px 40px; }
+        .header { margin-bottom: 32px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header .meta { color: var(--text-muted); font-size: 14px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .kpi-card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+        .kpi-card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+        .kpi-card .value.success { color: var(--success); }
+        .kpi-card .value.warning { color: var(--warning); }
+        .kpi-card .value.danger { color: var(--danger); }
+        .kpi-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .section { background: var(--card-bg); border-radius: 12px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .section h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f9fafb; font-weight: 600; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .tag-success { background: #d1fae5; color: #065f46; }
+        .tag-warning { background: #fef3c7; color: #92400e; }
+        .tag-danger { background: #fee2e2; color: #991b1b; }
+        .tag-info { background: #dbeafe; color: #1e40af; }
+        .highlight { background: #fef9c3; padding: 2px 4px; border-radius: 2px; }
+        .search-box { position: relative; margin-bottom: 24px; }
+        .search-box input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+        .search-box input:focus { outline: none; border-color: var(--primary); }
+        .btn { display: inline-block; padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #1e40af; }
+        .risk-high { border-left: 4px solid var(--danger); }
+        .risk-medium { border-left: 4px solid var(--warning); }
+        .risk-low { border-left: 4px solid var(--success); }
+        .timeline { border-left: 2px solid var(--border); padding-left: 24px; margin-left: 8px; }
+        .timeline-item { position: relative; padding-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -29px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid white; }
+        .timeline-item.high::before { background: var(--danger); }
+        .timeline-item.medium::before { background: var(--warning); }
+        .toc { background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+        .toc h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+        .toc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .toc-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+        .toc-item:hover { color: var(--primary); }
+        .toc-num { width: 20px; height: 20px; background: var(--primary); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+        @media print { .sidebar { display: none; } .main { margin-left: 0; } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>航宇科技 688239</h1>
+                <div class="subtitle">投研报告 · 2026-04-07</div>
+            </div>
+            <nav class="nav">
+                <div class="nav-item active" data-target="summary">总览</div>
+                <div class="nav-item" data-target="macro">01 宏观环境</div>
+                <div class="nav-item" data-target="industry">02 行业分析</div>
+                <div class="nav-item" data-target="data">03 数据校验</div>
+                <div class="nav-item" data-target="fundamental">04 基本面研究</div>
+                <div class="nav-item" data-target="sentiment">05 市场情绪</div>
+                <div class="nav-item" data-target="technical">06 技术分析</div>
+                <div class="nav-item" data-target="risk">07 风险评估</div>
+                <div class="nav-item" data-target="fundmanager">08 基金经理</div>
+                <div class="nav-item" data-target="conclusion">09 综合报告</div>
+            </nav>
+            <div style="padding: 16px 20px; border-top: 1px solid var(--border);">
+                <button class="btn" onclick="window.print()" style="width:100%;text-align:center;">导出PDF</button>
+            </div>
+        </aside>
+        <main class="main">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索报告内容..." onkeyup="searchContent()">
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid" id="kpiSection">
+                <div class="kpi-card">
+                    <div class="label">投资评级</div>
+                    <div class="value success">中性偏乐观</div>
+                    <div class="sub">边际改善</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">目标价</div>
+                    <div class="value">64-72元</div>
+                    <div class="sub">当前价: 54.14元</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">上涨空间</div>
+                    <div class="value success">+18%~+33%</div>
+                    <div class="sub">基准情景</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">风险等级</div>
+                    <div class="value warning">中</div>
+                    <div class="sub">综合风险中等</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">总市值</div>
+                    <div class="value">103亿元</div>
+                    <div class="sub">PE 55倍</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">在手订单</div>
+                    <div class="value success">~60亿元</div>
+                    <div class="sub">覆盖2026-2027年</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">2025年收入</div>
+                    <div class="value">20.34亿</div>
+                    <div class="sub">同比+12.64%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">海外收入占比</div>
+                    <div class="value">45%</div>
+                    <div class="sub">全球市场份额目标20-30%</div>
+                </div>
+            </div>
+
+            <!-- Summary Section -->
+            <div id="summary" class="section">
+                <h2>投资摘要</h2>
+                <table>
+                    <tr><th style="width:150px;">投资评级</th><td><span class="tag tag-success">中性偏乐观</span> 边际改善</td></tr>
+                    <tr><th>目标价区间</th><td>64-72元</td></tr>
+                    <tr><th>当前股价</th><td>54.14元（2026-04-07）</td></tr>
+                    <tr><th>上涨空间</th><td>+18%~+33%</td></tr>
+                    <tr><th>持有周期</th><td>中线1-3个月，长线6-12个月</td></tr>
+                    <tr><th>风险等级</th><td><span class="tag tag-warning">中</span></td></tr>
+                    <tr><th>止损位</th><td>49.21元（严格执行）</td></tr>
+                    <tr><th>建仓区间</th><td>49-54元（左侧试探）</td></tr>
+                </table>
+                <h3 style="margin-top:24px;font-size:16px;">三大核心逻辑</h3>
+                <ol style="margin-top:12px;padding-left:20px;">
+                    <li style="margin-bottom:8px;"><strong>军工航空赛道长期确定性高</strong> — 国防预算+7.2%，C919/ARJ21放量</li>
+                    <li style="margin-bottom:8px;"><strong>全球市场份额提升逻辑清晰</strong> — 海外收入占比45%，目标份额20-30%</li>
+                    <li style="margin-bottom:8px;"><strong>订单充裕保障短期业绩</strong> — 在手订单59.68亿元</li>
+                </ol>
+                <h3 style="margin-top:24px;font-size:16px;">关键催化剂</h3>
+                <div class="timeline" style="margin-top:16px;">
+                    <div class="timeline-item high">
+                        <strong>4月（即将）</strong> — 2025年年报披露（业绩拐点确认）
+                        <span class="tag tag-danger" style="margin-left:8px;">最重要</span>
+                    </div>
+                    <div class="timeline-item medium">
+                        <strong>4-5月</strong> — 一季报业绩改善（国内交付拐点）
+                    </div>
+                    <div class="timeline-item">
+                        <strong>下半年</strong> — 德阳产能利用率提升
+                    </div>
+                    <div class="timeline-item">
+                        <strong>2027年</strong> — 匈牙利工厂开工
+                    </div>
+                </div>
+            </div>
+
+            <!-- Macro Section -->
+            <div id="macro" class="section hidden">
+                <h2>01 宏观环境分析</h2>
+                <p><strong>报告日期：</strong>2026年4月7日 | <strong>数据来源：</strong>iFinD宏观数据库、国家财政部</p>
+                <h3 style="margin-top:20px;font-size:15px;">核心宏观指标</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>最新值</th><th>趋势</th></tr>
+                    <tr><td>GDP当季环比</td><td>2025Q4: 1.2%</td><td>较Q3放缓</td></tr>
+                    <tr><td>制造业PMI</td><td>2026年3月: 50.4%</td><td>重返扩张区间</td></tr>
+                    <tr><td>CPI同比</td><td>2025年12月: 0.0%</td><td>低位运行</td></tr>
+                    <tr><td>PPI同比</td><td>2026年2月: -0.9%</td><td>负值收窄</td></tr>
+                    <tr><td>M2同比</td><td>2026年2月: 9.0%</td><td>平稳增长</td></tr>
+                    <tr><td>国防支出</td><td>2024年: 1.69万亿元</td><td>+7.2% yoy</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">政策环境</h3>
+                <ul style="margin-top:12px;padding-left:20px;">
+                    <li>国防预算连续多年保持7%稳定增长，2024年达1.69万亿元</li>
+                    <li>军民融合政策持续推进，民营企业进入军工配套体系通道畅通</li>
+                    <li>高端制造支持政策明确，专精特新企业享受多重红利</li>
+                </ul>
+                <h3 style="margin-top:20px;font-size:15px;">宏观风险</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>风险类型</th><th>风险描述</th></tr>
+                    <tr><td>宏观需求不及预期</td><td>GDP增速持续下滑，拖累军工投入</td></tr>
+                    <tr><td>地缘政治风险</td><td>台海、南海局势影响地区稳定</td></tr>
+                    <tr><td>原材料价格波动</td><td>高温合金、钛合金价格大幅上涨</td></tr>
+                    <tr><td>军品定价改革</td><td>目标价格管理机制倒逼成本控制</td></tr>
+                </table>
+            </div>
+
+            <!-- Industry Section -->
+            <div id="industry" class="section hidden">
+                <h2>02 行业分析</h2>
+                <p><strong>报告日期：</strong>2026-04-07 | <strong>行业：</strong>航空航天防务</p>
+                <h3 style="margin-top:20px;font-size:15px;">市场规模</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数据</th></tr>
+                    <tr><td>2024年中国航空航天核心产业市场规模</td><td>突破<strong>2万亿元</strong></td></tr>
+                    <tr><td>2025年国防预算</td><td><strong>1.81万亿元</strong>，同比+7.2%</td></tr>
+                    <tr><td>2030年商业航天市场规模预测</td><td><strong>7.8万亿元</strong></td></tr>
+                    <tr><td>2026年低空经济核心产业规模</td><td><strong>突破万亿元</strong></td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">竞争格局</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>细分赛道</th><th>主要参与者</th><th>竞争态势</th></tr>
+                    <tr><td>机体结构件锻件</td><td>三角防务、中航重机</td><td>两者主导</td></tr>
+                    <tr><td>航空发动机环形锻件</td><td><strong>航宇科技（688239.SH）</strong></td><td>国内核心龙头</td></tr>
+                    <tr><td>高温合金/钛合金精密锻造</td><td>派克新材、钢研高纳</td><td>细分领域竞争</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">航宇科技核心优势</h3>
+                <ul style="margin-top:12px;padding-left:20px;">
+                    <li>技术壁垒高：掌握航空难变形金属材料环形锻件成型、高精度环轧工艺</li>
+                    <li>客户优质：深度绑定GE、赛峰、罗罗、普惠，进入国际供应链</li>
+                    <li>C919配套LEAP-1C发动机环形锻件，国产大飞机商业化提供长期增量</li>
+                </ul>
+            </div>
+
+            <!-- Data Section -->
+            <div id="data" class="section hidden">
+                <h2>03 数据校验</h2>
+                <h3 style="margin-top:20px;font-size:15px;">公司基础信息</h3>
+                <table style="margin-top:12px;">
+                    <tr><th style="width:150px;">项目</th><th>内容</th></tr>
+                    <tr><td>股票代码</td><td>688239.SH</td></tr>
+                    <tr><td>公司全称</td><td>贵州航宇科技发展股份有限公司</td></tr>
+                    <tr><td>上市日期</td><td>2021-07-05</td></tr>
+                    <tr><td>主营业务</td><td>航空难变形金属材料环形锻件研发、生产和销售</td></tr>
+                    <tr><td>实际控制人</td><td>张华（持股13.78%）</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">财务数据</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>报告期</th><th>营业收入</th><th>归母净利润</th><th>YoY</th></tr>
+                    <tr><td>2024年报</td><td>18.05亿</td><td>1.89亿</td><td>营收-14.2%，净利+1.6%</td></tr>
+                    <tr><td>2025年快报</td><td>20.34亿</td><td>1.86亿</td><td>营收+12.64%，净利-1.44%</td></tr>
+                    <tr><td>2026E</td><td>~22亿</td><td>~2.3亿</td><td>净利+24%</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">估值指标</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数值</th><th>评估</th></tr>
+                    <tr><td>PE(TTM)</td><td>55.18倍</td><td><span class="tag tag-warning">偏高</span></td></tr>
+                    <tr><td>PB</td><td>5.24倍</td><td>合理</td></tr>
+                    <tr><td>PS(TTM)</td><td>5.40倍</td><td>合理</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;color:#dc2626;">风险提示</h3>
+                <ul style="margin-top:8px;padding-left:20px;color:#dc2626;">
+                    <li>2024年营收同比下滑14.19%，2025Q1继续下滑26.99%</li>
+                    <li>PE估值偏高（55倍），需关注业绩复苏情况</li>
+                    <li>可转债转股压力</li>
+                </ul>
+            </div>
+
+            <!-- Fundamental Section -->
+            <div id="fundamental" class="section hidden">
+                <h2>04 基本面研究</h2>
+                <h3 style="margin-top:20px;font-size:15px;">公司概述</h3>
+                <p style="margin-top:8px;">航宇科技是A股市场<strong>航空发动机环形锻件的稀缺龙头</strong>，可比公司为中航重机、三角防务、派克新材。公司主营航空难变形金属材料环形锻件，深度嵌入航空发动机和航天两大高壁垒赛道。</p>
+                <h3 style="margin-top:20px;font-size:15px;">收入结构（2025年）</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>业务板块</th><th>收入占比</th><th>毛利率</th></tr>
+                    <tr><td>航空锻件（国内）</td><td>~40%</td><td>~28%</td></tr>
+                    <tr><td>航空锻件（海外）</td><td>~45%</td><td>较高</td></tr>
+                    <tr><td>燃气轮机锻件</td><td>~15%</td><td>~30%</td></tr>
+                    <tr><td>航天锻件</td><td>~7%</td><td>~17%</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">核心客户</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>客户类型</th><th>代表客户</th></tr>
+                    <tr><td>海外航空发动机</td><td>GE、赛峰、罗罗、普惠</td></tr>
+                    <tr><td>海外燃气轮机</td><td>贝克休斯、GE、西门子</td></tr>
+                    <tr><td>国内航空/特种</td><td>商发等国家队</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">在手订单</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数据</th></tr>
+                    <tr><td>在手订单总额</td><td>约60亿元</td></tr>
+                    <tr><td>已下系统订单</td><td>约30亿元（大部分2027年前交付）</td></tr>
+                    <tr><td>商发占比</td><td>约85%-90%</td></tr>
+                    <tr><td>长协期限</td><td>最长预测至2029年</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">投资亮点</h3>
+                <ul style="margin-top:8px;padding-left:20px;">
+                    <li>在手订单约60亿元，保障未来2-3年业绩确定性</li>
+                    <li>海外收入9.11亿元（+19.35%），全球市场份额目标20%-30%</li>
+                    <li>NSP技术获全球航空龙头认证，节省原材料20%-50%</li>
+                    <li>产业链延伸（精加工、组件交付）提升附加值30%-40%</li>
+                </ul>
+            </div>
+
+            <!-- Sentiment Section -->
+            <div id="sentiment" class="section hidden">
+                <h2>05 市场情绪分析</h2>
+                <h3 style="margin-top:20px;font-size:15px;">分析师评级</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>券商</th><th>评级</th><th>日期</th><th>目标价/估值</th></tr>
+                    <tr><td>太平洋证券</td><td><span class="tag tag-success">买入（首次覆盖）</span></td><td>2026-04-06</td><td>PE 59x/34x/26x（2025-2027年）</td></tr>
+                    <tr><td>天风证券</td><td><span class="tag tag-success">买入</span></td><td>2025-04-08</td><td>-</td></tr>
+                    <tr><td>民生证券</td><td><span class="tag tag-success">买入</span></td><td>2024-10-31</td><td>40.95元（当时）</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">情绪研判</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>维度</th><th>判断</th></tr>
+                    <tr><td>机构情绪</td><td>偏正面（多家券商买入）</td></tr>
+                    <tr><td>散户情绪</td><td>观望为主</td></tr>
+                    <tr><td>外资情绪</td><td>积极（境外收入占比提升）</td></tr>
+                    <tr><td>整体情绪</td><td><span class="tag tag-info">中性偏正面</span></td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">近期重大事件</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>日期</th><th>事件</th><th>影响</th></tr>
+                    <tr><td>2026-04-06</td><td>太平洋证券首次覆盖，给予买入评级</td><td><span class="tag tag-success">正面</span></td></tr>
+                    <tr><td>2026-02-27</td><td>发布2025年度业绩快报</td><td>中性</td></tr>
+                    <tr><td>2025-12</td><td>德阳精加工产线投产</td><td><span class="tag tag-success">正面</span></td></tr>
+                </table>
+            </div>
+
+            <!-- Technical Section -->
+            <div id="technical" class="section hidden">
+                <h2>06 技术分析</h2>
+                <h3 style="margin-top:20px;font-size:15px;">当前价格位置</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数值</th></tr>
+                    <tr><td>最新收盘价</td><td><strong>54.14元</strong></td></tr>
+                    <tr><td>近期最高</td><td>75.22元（2026年3月6日）</td></tr>
+                    <tr><td>近期最低</td><td>49.21元（2025年11月21日）</td></tr>
+                    <tr><td>从高点回落</td><td>-28%</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">均线系统</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>均线</th><th>数值</th><th>与收盘价关系</th></tr>
+                    <tr><td>MA5</td><td>55.88元</td><td>价格 &lt; MA5（偏弱）</td></tr>
+                    <tr><td>MA10</td><td>56.65元</td><td>价格 &lt; MA10（偏弱）</td></tr>
+                    <tr><td>MA20</td><td>61.96元</td><td>价格 &lt; MA20（偏弱）</td></tr>
+                    <tr><td>MA60</td><td>52.18元</td><td>价格 &gt; MA60（偏强）</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">技术指标</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数值</th><th>信号</th></tr>
+                    <tr><td>MACD</td><td>DIF=-0.95，绿柱=-2.98</td><td><span class="tag tag-danger">水下运行</span></td></tr>
+                    <tr><td>KDJ</td><td>J=3.51，K=17.61</td><td><span class="tag tag-success">深度超卖</span></td></tr>
+                    <tr><td>RSI(6)</td><td>24.93</td><td><span class="tag tag-success">超卖</span></td></tr>
+                    <tr><td>RSI(12)</td><td>26.25</td><td><span class="tag tag-success">超卖</span></td></tr>
+                    <tr><td>布林带</td><td>价格位置21.9%</td><td>接近下轨</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">综合评级</h3>
+                <div style="background:#fef3c7;padding:16px;border-radius:8px;margin-top:12px;">
+                    <strong>技术面综合评级: 5/10 中性偏弱</strong><br>
+                    <span style="color:#92400e;">短期（1-4周）：技术性反弹概率较大（KDJ、RSI多周期超卖共振）</span><br>
+                    <span style="color:#92400e;">关键支撑: 49.21元 | 关键压力: 55.88-56.65元（MA5/MA10）</span>
+                </div>
+            </div>
+
+            <!-- Risk Section -->
+            <div id="risk" class="section hidden">
+                <h2>07 风险评估</h2>
+                <h3 style="margin-top:20px;font-size:15px;">风险等级总览</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>风险维度</th><th>风险等级</th><th>主要风险点</th></tr>
+                    <tr><td>经营风险</td><td><span class="tag tag-warning">中</span></td><td>客户集中度、交付节奏、子公司亏损</td></tr>
+                    <tr><td>财务风险</td><td><span class="tag tag-warning">中</span></td><td>应收账款压力、经营现金流</td></tr>
+                    <tr><td>市场风险</td><td><span class="tag tag-danger">中高</span></td><td>估值偏高、股价波动性</td></tr>
+                    <tr><td>政策风险</td><td><span class="tag tag-warning">中</span></td><td>军品定价改革、地缘政治</td></tr>
+                    <tr><td>供应链风险</td><td><span class="tag tag-success">中低</span></td><td>原材料价格可控</td></tr>
+                    <tr><td><strong>综合风险</strong></td><td><span class="tag tag-warning">中</span></td><td>建议关注</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">风险矩阵</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>风险类型</th><th>发生概率</th><th>影响程度</th><th>风险等级</th></tr>
+                    <tr><td>国内客户交付节奏进一步延后</td><td>中</td><td>高</td><td><span class="tag tag-danger">中高</span></td></tr>
+                    <tr><td>军品定价改革压缩利润</td><td>中</td><td>中</td><td><span class="tag tag-warning">中</span></td></tr>
+                    <tr><td>子公司持续亏损拖累业绩</td><td>中</td><td>中</td><td><span class="tag tag-warning">中</span></td></tr>
+                    <tr><td>股价大幅波动风险</td><td>高</td><td>中</td><td><span class="tag tag-danger">中高</span></td></tr>
+                    <tr><td>原材料价格大幅上涨</td><td>低-中</td><td>中</td><td><span class="tag tag-success">中低</span></td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">风险应对建议</h3>
+                <ul style="margin-top:12px;padding-left:20px;">
+                    <li><strong>仓位管理：</strong>单只股票持仓不超过15%</li>
+                    <li><strong>止损建议：</strong>短线止损49.21元，中线止损52元</li>
+                    <li><strong>持仓优化：</strong>若持有浮亏，考虑定投摊薄成本</li>
+                    <li><strong>动态跟踪：</strong>每月跟踪子公司扭亏进度，每季度评估估值合理性</li>
+                </ul>
+            </div>
+
+            <!-- Fund Manager Section -->
+            <div id="fundmanager" class="section hidden">
+                <h2>08 基金经理评估</h2>
+                <div style="background:#eff6ff;padding:20px;border-radius:12px;margin-top:20px;border:1px solid #bfdbfe;">
+                    <h3 style="font-size:16px;margin-bottom:12px;">投资决策</h3>
+                    <table>
+                        <tr><th style="width:150px;">投资评级</th><td><span class="tag tag-success">中性偏乐观（边际改善）</span></td></tr>
+                        <tr><th>当前评级</th><td>谨慎持有 / 逢低布局</td></tr>
+                        <tr><th>建仓区间</th><td>49-54元（优先左侧试探）</td></tr>
+                        <tr><th>目标区间</th><td>64-72元（+18-33%）</td></tr>
+                        <tr><th>持有周期</th><td>中线1-3个月，长线6-12个月</td></tr>
+                        <tr><th>止损位</th><td>49.21元（严格执行）</td></tr>
+                        <tr><th>单票仓位</th><td>不超过15%</td></tr>
+                    </table>
+                </div>
+                <h3 style="margin-top:24px;font-size:15px;">目标价与上涨空间</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>情景</th><th>目标价</th><th>上涨空间</th><th>触发条件</th></tr>
+                    <tr><td>乐观</td><td>72-75元</td><td>+33-39%</td><td>业绩超预期+海外订单释放</td></tr>
+                    <tr><td>基准</td><td>64-70元</td><td>+18-29%</td><td>业绩符合预期，估值平稳</td></tr>
+                    <tr><td>保守</td><td>56-60元</td><td>+3-11%</td><td>业绩低于预期，估值压缩</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">风险收益比</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>指标</th><th>数值</th><th>评价</th></tr>
+                    <tr><td>上行空间（基准）</td><td>22%</td><td>中等</td></tr>
+                    <tr><td>下行风险（基准）</td><td>9%</td><td>可控</td></tr>
+                    <tr><td>风险收益比</td><td>1:2.4</td><td>尚可</td></tr>
+                    <tr><td>胜率（基准）</td><td>60%+</td><td>中高</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">基金经理一句话总结</h3>
+                <blockquote style="background:#fef9c3;padding:16px;border-radius:8px;margin-top:12px;border-left:4px solid #f59e0b;">
+                    航宇科技是航空发动机环形锻件的稀缺龙头，订单充裕保障中期业绩，但当前估值偏高且技术面偏弱，建议等待业绩拐点确认或技术面企稳后再逢低布局，目标价64-72元，持有6-12个月获取绝对收益。
+                </blockquote>
+            </div>
+
+            <!-- Conclusion Section -->
+            <div id="conclusion" class="section hidden">
+                <h2>09 综合报告</h2>
+                <div style="background:linear-gradient(135deg,#1a56db,#6b7280);color:white;padding:24px;border-radius:12px;margin-top:20px;">
+                    <h3 style="font-size:18px;margin-bottom:16px;">最终投资结论</h3>
+                    <table style="color:white;">
+                        <tr><td style="width:150px;opacity:0.8;">投资评级</td><td style="font-size:20px;font-weight:700;">中性偏乐观（边际改善）</td></tr>
+                        <tr><td style="opacity:0.8;">目标价</td><td>64-72元</td></tr>
+                        <tr><td style="opacity:0.8;">上涨空间</td><td>+18%~+33%</td></tr>
+                        <tr><td style="opacity:0.8;">风险等级</td><td>中</td></tr>
+                        <tr><td style="opacity:0.8;">质量评分</td><td>A档</td></tr>
+                    </table>
+                </div>
+                <h3 style="margin-top:24px;font-size:15px;">操作建议</h3>
+                <table style="margin-top:12px;">
+                    <tr><th>项目</th><th>建议</th></tr>
+                    <tr><td>买入时机</td><td>不追高，49-54元区间逢低布局</td></tr>
+                    <tr><td>止损位</td><td>49.21元（严格执行）</td></tr>
+                    <tr><td>止盈位</td><td>61.96元（MA20）减仓30%，68-72元分批减仓</td></tr>
+                    <tr><td>仓位上限</td><td>单票不超过15%</td></tr>
+                    <tr><td>持有周期</td><td>中线1-3个月，长线6-12个月</td></tr>
+                </table>
+                <h3 style="margin-top:20px;font-size:15px;">最大风险</h3>
+                <ul style="margin-top:12px;padding-left:20px;">
+                    <li>国内交付节奏持续延后（发生概率中）</li>
+                    <li>估值从55倍压缩至40倍</li>
+                    <li>子公司（成航发、钜航）持续亏损</li>
+                </ul>
+                <h3 style="margin-top:20px;font-size:15px;">跟踪事项</h3>
+                <ul style="margin-top:12px;padding-left:20px;">
+                    <li>2025年年报披露（4月）— 业绩拐点确认</li>
+                    <li>一季报（4-5月）— 国内交付拐点验证</li>
+                    <li>德阳产能利用率提升情况</li>
+                    <li>股价能否突破61.96元（MA20）</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const target = item.dataset.target;
+                document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(target).classList.remove('hidden');
+                window.scrollTo(0, 0);
+            });
+        });
+
+        // Search
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!query) return;
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    section.classList.remove('hidden');
+                    section.style.display = 'block';
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
