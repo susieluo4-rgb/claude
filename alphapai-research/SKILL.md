@@ -136,23 +136,23 @@ python scripts/alphapai_client.py recall --query "宁德时代电池技术" --no
 
 当用户要求「读取完整纪要」「获取完整会议纪要」「查看完整纪要」时，使用以下标准化流程：
 
-**Step 1：从 JSON 中解析并保存完整纪要为 TXT**
+**Step 1：下载并保存完整纪要（近3个月全部）**
 
 ```bash
 python scripts/alphapai_client.py transcript \
-  --query "<公司名/股票名> <纪要标题>" \
+  --query "<公司名/股票名> <纪要关键词>" \
   --path-prefix "11_公司列表/<拼音首字母>/<公司名>_<股票代码>" \
-  --start <开始日期> --end <结束日期> \
-  [--open] \
-  [--summarize]
+  [--start <YYYY-MM-DD>] \
+  [--end <YYYY-MM-DD>] \
+  [--summarize] \
+  [--open]
 ```
 
-> **`--summarize`**（可选）：保存纪要后，自动调用 qa 生成摘要并保存为 `{标题}_摘要.md`，包含业绩评价、业务进展、行业展望、投资者问答四大章节及关键数据表。
-
 **关键说明：**
-
-- **`--no-cutoff` 必须加**：不加则只返回摘要片段，加上才能拿到完整原文
-- **纪要存在于 `roadShow` type 下**：`transcript` type 返回空，实际全文索引在 roadShow
+- **`--start/--end`**：可选，默认向前推90天（近3个月），可收窄时间范围精确命中某次特定交流会
+- **全部纪要均保存**：检索结果中的所有匹配纪要，每篇均保存为独立 TXT，不再只取第一条
+- **`--summarize`**（可选）：对每篇纪要均自动生成4章节摘要，保存为 `{标题}_摘要.md`
+- **纪要存在于 `roadShow` type 下**：内部固定调用 `recall --type roadShow --no-cutoff`，自动拼接 chunks 保存完整原文
 - **完整内容在 JSON 的 `chunks` 数组中**：每个 chunk 是一个语义段落，用 `\n\n` 拼接即为完整纪要
 - **保存路径**：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{股票代码}/alphapai/`
 - **文件命名**：`{标题}_{记录ID}.txt`，如 `宁德时代（300750.SZ,03750.HK）2025年报业绩解读会_TRANSMT00002671134.txt`
