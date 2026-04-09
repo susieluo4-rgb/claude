@@ -741,8 +741,48 @@ def cmd_transcript(args):
     print(f"✅ 已保存：{filepath}")
     print(f"   共 {len(chunks)} 个chunk，{len(full_text)} 字符")
 
-    if args.open:
-        os.system(f'open "{filepath}"')
+    # --summarize：保存纪要后，调用 qa 生成摘要并保存为 .md
+    if args.summarize:
+        print(f"📝 正在生成摘要...")
+        summary_question = (
+            f"请总结这篇会议纪要的核心内容，包括：1）管理层对业绩的评价；"
+            f"2）业务进展和新签订单情况；3）行业展望与战略；4）投资者问答中的关键问题与回答。"
+            f"\n纪要标题：{title}\n发布时间：{pub_time}"
+        )
+        qa_result = client.qa_text(
+            question=summary_question,
+            mode="Think",
+            is_stream=True,
+        )
+        # parse_sse returns {"answer": ..., "references": [...]}
+        answer = qa_result.get("answer", "")
+        references = qa_result.get("references", [])
+
+        summary_lines = [f"# {title} — 会议纪要摘要\n"]
+        summary_lines.append(f"**发布时间**：{pub_time}\n")
+        summary_lines.append(f"**记录ID**：{record_id}\n")
+        summary_lines.append(f"**来源**：AlphaPai 路演纪要\n")
+        summary_lines.append("---\n\n")
+        summary_lines.append(answer)
+        if references:
+            summary_lines.append("\n\n---\n**参考来源**：\n")
+            for i, ref in enumerate(references, 1):
+                ref_date = f" ({ref.get('publishDate', '')})" if ref.get("publishDate") else ""
+                summary_lines.append(
+                    f"{i}. [{ref.get('title', '')}]{ref_date}"
+                )
+        summary_text = "".join(summary_lines)
+
+        summary_filename = f"{safe_title}_摘要.md"
+        summary_filepath = os.path.join(save_dir, summary_filename)
+        with open(summary_filepath, "w", encoding="utf-8") as f:
+            f.write(summary_text)
+
+        print(f"✅ 摘要已保存：{summary_filepath}")
+        print(f"   摘要长度：{len(answer)} 字符")
+
+        if args.open:
+            os.system(f'open "{summary_filepath}"')
 
 
 def cmd_image(args):
@@ -963,6 +1003,11 @@ def main():
         "--open",
         action="store_true",
         help="保存后自动用 open 打开文件",
+    )
+    p_tc.add_argument(
+        "--summarize",
+        action="store_true",
+        help="保存纪要后，自动调用 qa 生成摘要并保存为 .md 文件",
     )
 
     # --- image ---

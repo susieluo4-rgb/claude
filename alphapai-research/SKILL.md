@@ -143,8 +143,11 @@ python scripts/alphapai_client.py transcript \
   --query "<公司名/股票名> <纪要标题>" \
   --path-prefix "<字母目录>/<公司名>_<股票代码>" \
   --start <开始日期> --end <结束日期> \
-  [--open]
+  [--open] \
+  [--summarize]
 ```
+
+> **`--summarize`**（可选）：保存纪要后，自动调用 qa 生成摘要并保存为 `{标题}_摘要.md`，包含业绩评价、业务进展、行业展望、投资者问答四大章节及关键数据表。
 
 **关键说明：**
 
