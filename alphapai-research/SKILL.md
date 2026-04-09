@@ -141,7 +141,7 @@ python scripts/alphapai_client.py recall --query "宁德时代电池技术" --no
 ```bash
 python scripts/alphapai_client.py transcript \
   --query "<公司名/股票名> <纪要标题>" \
-  --path-prefix "<字母目录>/<公司名>_<股票代码>" \
+  --path-prefix "11_公司列表/<拼音首字母>/<公司名>_<股票代码>" \
   --start <开始日期> --end <结束日期> \
   [--open] \
   [--summarize]
@@ -154,9 +154,9 @@ python scripts/alphapai_client.py transcript \
 - **`--no-cutoff` 必须加**：不加则只返回摘要片段，加上才能拿到完整原文
 - **纪要存在于 `roadShow` type 下**：`transcript` type 返回空，实际全文索引在 roadShow
 - **完整内容在 JSON 的 `chunks` 数组中**：每个 chunk 是一个语义段落，用 `\n\n` 拼接即为完整纪要
-- **保存路径**：`~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{股票代码}/alphapai/`
+- **保存路径**：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{股票代码}/alphapai/`
 - **文件命名**：`{标题}_{记录ID}.txt`，如 `宁德时代（300750.SZ,03750.HK）2025年报业绩解读会_TRANSMT00002671134.txt`
-- **`--path-prefix`**：传入完整相对路径，由 radar-agent 根据公司名和股票代码确定字母目录后传入
+- **`--path-prefix`**：传入完整相对路径，如 `11_公司列表/Z/中芯国际_688981`，由 radar-agent 根据公司名和股票代码确定拼音首字母后传入
 
 ### recallType 枚举值
 

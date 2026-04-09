@@ -46,12 +46,13 @@ Lead Agent 调用 雷达Agent（被动响应）
 **必须执行**，优先于其他数据源：
 
 ```
-目标路径：~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{股票代码}/
+目标路径：~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{股票代码}/
 ```
 
 **⚠️ 文件夹命名规范（实测重要）**：
 - 格式：必须是 `{公司名}_{股票代码}`，例如 `中芯国际_688981`
-- 字母目录按股票代码的首字母确定（中芯国际→S-Z）
+- 拼音首字母按公司名拼音首字母确定（中芯国际→Z→`11_公司列表/Z/`）
+- 字母目录已统一为 `11_公司列表/` 下的单字母子目录（A/B/C/.../Z）
 - download_reports.py 依赖此格式识别市场，格式不对会导致下载失败
 
 **执行步骤：**
@@ -80,10 +81,10 @@ Lead Agent 调用 雷达Agent（被动响应）
      - 科创板(688xxx)：从上交所科创板平台获取，CNINFO不支持
      - 主板：从CNINFO(巨潮)下载
      - 创业板：CNINFO下载
-   - 所有补充下载的文件存入：`Vault_公司基本面Agent/{字母目录}/{公司名}_{代码}/`
+   - 所有补充下载的文件存入：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/`
 
 4. **存储AlphaPai收集结果**
-   - 新建文件夹：`Vault_公司基本面Agent/{字母目录}/{公司名}_{代码}/alphapai/`
+   - 新建文件夹：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/`
    - 存入内容：
      ```
      alphapai/
@@ -99,7 +100,7 @@ Lead Agent 调用 雷达Agent（被动响应）
 ```
 优先级 1：本地文件（最高）
   → 扫描 ~/Documents/earnings-transcripts/{公司名}*
-  → 扫描 ~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}/
+  → 扫描 ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}/
   → 如有最新年报/季报PDF，直接读取
 
 优先级 2：iFind MCP
@@ -124,7 +125,7 @@ Lead Agent 调用 雷达Agent（被动响应）
 ```
 优先级 1：本地文件（最高）
   → 扫描 ~/Documents/earnings-transcripts/{公司名}*
-  → 扫描 ~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}/
+  → 扫描 ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}/
   → 如有最新年报/季报PDF，直接读取
 
 优先级 2：iFind MCP
@@ -215,7 +216,7 @@ Lead Agent 调用 雷达Agent（被动响应）
 
 **2. 基本面Agent文件夹**（与基本面Agent共享，作为double check）：
 ```
-路径：~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{股票代码}/
+路径：~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{股票代码}/
 
 文件（原有）：
 ├── 年报/
@@ -248,17 +249,17 @@ Vault_公司基本面Agent/S-Z/中芯国际_688981/
 ## AlphaPai 调用规范
 
 ### 路演纪要检索（完整版）
-使用 `transcript` 命令，自动获取完整纪要并保存为 TXT 到 `~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{股票代码}/alphapai/`：
+使用 `transcript` 命令，自动获取完整纪要并保存为 TXT 到 `~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{股票代码}/alphapai/`：
 
 ```bash
 python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript \
   --query "{公司名称} {股票代码} {纪要关键词}" \
-  --path-prefix "{字母目录}/{公司名}_{股票代码}" \
+  --path-prefix "11_公司列表/{拼音首字母}/{公司名}_{股票代码}" \
   --start $(date -v-3m +%Y-%m-%d) \
   --end $(date +%Y-%m-%d)
 ```
 
-> **说明**：`--path-prefix` 由 Step 1.5 确认的字母目录和公司文件夹名拼接而成，内部固定调用 `recall --type roadShow --no-cutoff`，自动拼接 chunks 保存完整原文。不再使用裸 `recall` 命令获取纪要。
+> **说明**：`--path-prefix` 由 Step 1.5 确认的拼音首字母和公司文件夹名拼接而成（如 `11_公司列表/Z/中芯国际_688981`），内部固定调用 `recall --type roadShow --no-cutoff`，自动拼接 chunks 保存完整原文。不再使用裸 `recall` 命令获取纪要。
 
 ### 研报检索
 ```bash
@@ -380,9 +381,9 @@ search_news({
 
 3. **下载后存储位置**：
    ```
-   ~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{代码}/年报/
-   ~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{代码}/半年报/
-   ~/Research/Vault_公司基本面Agent/{字母目录}/{公司名}_{代码}/季报/
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/年报/
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/半年报/
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/季报/
    ```
 
 4. **港股年报下载实测记录**
