@@ -1,0 +1,35 @@
+{
+  "enabledPlugins": {
+    "equity-research@financial-services-plugins": true,
+    "financial-analysis@financial-services-plugins": true,
+    "investment-banking@financial-services-plugins": true,
+    "private-equity@financial-services-plugins": true,
+    "wealth-management@financial-services-plugins": true
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-cp-JlRQ_8VcVR9RKREQ4ggodzC4dLuNHf3xs-4DPs1lkX8t5vtR9_FAW1iwqelXyq1HKpDFBHJ0GAAfEzO0HFhBVn83WPwQEUHmapn7aWPCfbtuvoWDXFrgzK4",
+    "ANTHROPIC_BASE_URL": "https://api.minimaxi.com/anthropic",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_MODEL": "MiniMax-M2.7",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "repo": "anthropics/claude-plugins-official",
+        "source": "github"
+      }
+    },
+    "financial-services-plugins": {
+      "source": {
+        "repo": "anthropics/financial-services-plugins",
+        "source": "github"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": false
+}

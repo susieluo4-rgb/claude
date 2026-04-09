@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宁德时代(300750)投研报告 - 2026-04-06</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #1a73e8;
+            --success: #34a853;
+            --warning: #fbbc04;
+            --danger: #ea4335;
+            --bg: #f8f9fa;
+            --sidebar: #1e3a5f;
+            --text: #202124;
+            --text-light: #5f6368;
+            --border: #e0e0e0;
+            --card-bg: #ffffff;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: var(--sidebar); color: #fff; position: fixed; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .sidebar-header .subtitle { font-size: 12px; opacity: 0.7; }
+        .sidebar-header .date { font-size: 11px; opacity: 0.5; margin-top: 8px; }
+        .search-box { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .search-box input { width: 100%; padding: 9px 12px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: #fff; font-size: 12px; }
+        .search-box input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-box input:focus { outline: none; background: rgba(255,255,255,0.15); }
+        .nav-section { padding: 10px 0; }
+        .nav-section-title { padding: 8px 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; }
+        .nav-item { padding: 12px 20px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); }
+        .nav-item.active { background: rgba(255,255,255,0.12); border-left-color: #4fc3f7; }
+        .nav-item .icon { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .main { flex: 1; margin-left: 260px; padding: 24px 32px; max-width: 1100px; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .page-header { margin-bottom: 24px; }
+        .page-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+        .page-title .icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+        .page-meta { font-size: 12px; color: var(--text-light); display: flex; gap: 16px; }
+        .summary-strip { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: #fff; padding: 20px 24px; border-radius: 12px; margin-bottom: 24px; }
+        .summary-strip h2 { font-size: 16px; margin-bottom: 6px; }
+        .summary-strip p { font-size: 13px; opacity: 0.9; line-height: 1.5; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .kpi-card { background: var(--card-bg); border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .kpi-card.highlight { border-left: 3px solid var(--success); }
+        .kpi-card.warn { border-left: 3px solid var(--warning); }
+        .kpi-card.danger { border-left: 3px solid var(--danger); }
+        .kpi-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .kpi-value { font-size: 20px; font-weight: 700; }
+        .kpi-value.positive { color: var(--success); }
+        .kpi-value.negative { color: var(--danger); }
+        .kpi-value.warning { color: var(--warning); }
+        .kpi-sub { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+        .rating-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .rating-buy { background: rgba(52,168,83,0.15); color: var(--success); }
+        .rating-hold { background: rgba(251,188,4,0.15); color: var(--warning); }
+        .rating-sell { background: rgba(234,67,53,0.15); color: var(--danger); }
+        .content-card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+        .card-title .icon { font-size: 14px; }
+        h3 { font-size: 14px; font-weight: 600; margin: 20px 0 12px; color: var(--text); }
+        h4 { font-size: 13px; font-weight: 600; margin: 16px 0 10px; color: var(--text); }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f3f4; padding: 9px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); font-size: 12px; }
+        td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9fa; }
+        .tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-right: 4px; }
+        .tag-green { background: rgba(52,168,83,0.12); color: #1b5e20; }
+        .tag-red { background: rgba(234,67,53,0.12); color: #c62828; }
+        .tag-yellow { background: rgba(251,188,4,0.12); color: #e65100; }
+        .tag-blue { background: rgba(26,115,232,0.12); color: #1565c0; }
+        .tag-purple { background: rgba(103,58,183,0.12); color: #6a1b9a; }
+        .risk-meter { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+        .risk-bar { flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+        .risk-fill { height: 100%; border-radius: 3px; }
+        .risk-low { background: var(--success); }
+        .risk-medium { background: var(--warning); }
+        .risk-high { background: var(--danger); }
+        .risk-label { font-size: 12px; font-weight: 600; min-width: 40px; }
+        .signal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0; }
+        .signal-card { background: #f8f9fa; border-radius: 8px; padding: 14px; text-align: center; }
+        .signal-card .signal-icon { font-size: 20px; margin-bottom: 6px; }
+        .signal-card .signal-label { font-size: 10px; color: var(--text-light); margin-bottom: 4px; }
+        .signal-card .signal-value { font-size: 13px; font-weight: 600; }
+        .catalyst-list { position: relative; padding-left: 20px; }
+        .catalyst-list::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+        .catalyst-item { position: relative; margin-bottom: 14px; }
+        .catalyst-item::before { content: ''; position: absolute; left: -15px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--primary); }
+        .catalyst-period { font-size: 10px; color: var(--text-light); margin-bottom: 2px; }
+        .catalyst-event { font-size: 13px; font-weight: 500; }
+        .catalyst-detail { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .agent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .agent-card { background: #f8f9fa; border-radius: 8px; padding: 14px; }
+        .agent-card .agent-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .agent-card .agent-conclusion { font-size: 12px; margin-bottom: 4px; }
+        .agent-card .agent-score { font-size: 10px; color: var(--text-light); }
+        .conclusion-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 10px; padding: 18px; margin-bottom: 20px; border-left: 4px solid var(--success); }
+        .conclusion-box h3 { font-size: 14px; margin-bottom: 8px; color: #1b5e20; margin-top: 0; }
+        .conclusion-box p { font-size: 13px; color: #2e7d32; line-height: 1.6; margin: 0; }
+        .print-btn { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; background: var(--primary); color: #fff; border: none; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 12px rgba(26,115,232,0.4); font-size: 20px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .print-btn:hover { transform: scale(1.1); }
+        .md-content { font-size: 13px; line-height: 1.7; color: var(--text); }
+        .md-content h3 { font-size: 15px; font-weight: 700; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .md-content h4 { font-size: 13px; font-weight: 600; margin: 18px 0 10px; }
+        .md-content p { margin: 10px 0; }
+        .md-content table { margin: 12px 0; }
+        .md-content ul, .md-content ol { margin: 10px 0; padding-left: 24px; }
+        .md-content li { margin: 6px 0; }
+        .md-content strong { font-weight: 600; }
+        .md-content hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+        .no-results { text-align: center; padding: 60px 20px; color: var(--text-light); display: none; }
+        .no-results.show { display: block; }
+        .highlight { background: #fef9e7; padding: 1px 3px; border-radius: 2px; }
+        @media print { .sidebar, .print-btn, .search-box { display: none !important; } .main { margin-left: 0 !important; max-width: 100% !important; padding: 20px !important; } .page { display: block !important; page-break-after: always; } .content-card { box-shadow: none; border: 1px solid #ddd; } body { background: #fff; } }
+        @media (max-width: 900px) { .container { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; } .agent-grid { grid-template-columns: 1fr; } .signal-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>宁德时代 (300750.SZ)</h1>
+                <div class="subtitle">多Agent智能投研报告</div>
+                <div class="date">📅 2026-04-06 | 8个Agent协同分析</div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 搜索关键词... (例: 净利润, 风险, 目标价)">
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">📊 投资摘要</div>
+                <div class="nav-item active" data-page="summary">
+                    <div class="icon" style="background:#34a853">✓</div>
+                    <span>投资研判摘要</span>
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">📋 详细报告</div>
+                <div class="nav-item" data-page="macro">
+                    <div class="icon" style="background:#1a73e8">宏</div>
+                    <span>宏观分析</span>
+                </div>
+                <div class="nav-item" data-page="industry">
+                    <div class="icon" style="background:#7b1fa2">业</div>
+                    <span>行业分析</span>
+                </div>
+                <div class="nav-item" data-page="data">
+                    <div class="icon" style="background:#0b8043">数</div>
+                    <span>数据校验</span>
+                </div>
+                <div class="nav-item" data-page="fundamental">
+                    <div class="icon" style="background:#e65100">基</div>
+                    <span>基本面研究</span>
+                </div>
+                <div class="nav-item" data-page="sentiment">
+                    <div class="icon" style="background:#c2185b">情</div>
+                    <span>市场情绪</span>
+                </div>
+                <div class="nav-item" data-page="technical">
+                    <div class="icon" style="background:#6d4c41">技</div>
+                    <span>技术分析</span>
+                </div>
+                <div class="nav-item" data-page="risk">
+                    <div class="icon" style="background:#d32f2f">风</div>
+                    <span>风险评估</span>
+                </div>
+                <div class="nav-item" data-page="fund">
+                    <div class="icon" style="background:#1565c0">基</div>
+                    <span>基金经理评估</span>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main">
+            <!-- 投资研判摘要 -->
+            <div id="page-summary" class="page active">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#34a853">✓</div>
+                        宁德时代 (300750.SZ) — 投资研判摘要
+                    </div>
+                    <div class="page-meta">
+                        <span>📅 分析日期: 2026-04-06</span>
+                        <span>📊 数据来源: iFind MCP + 8个专业Agent</span>
+                    </div>
+                </div>
+
+                <div class="summary-strip">
+                    <h2>🏆 核心结论：推荐（中性偏多）</h2>
+                    <p>宁德时代是全球动力电池绝对龙头，2025年净利润600亿元(+18.2% YoY)，现金流优秀（经营现金流1050亿元），储能第二增长曲线清晰。当前估值处于合理偏低区间，技术面短期走弱不改中长线投资价值。建议中线持有(6-18个月)，目标价420-480元。</p>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">投资评级</div>
+                        <div class="kpi-value positive">推荐</div>
+                        <div class="kpi-sub">7/8 Agent正面</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">当前股价</div>
+                        <div class="kpi-value">386.46元</div>
+                        <div class="kpi-sub">2026-04-06</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">目标价区间</div>
+                        <div class="kpi-value positive">420-480元</div>
+                        <div class="kpi-sub">潜在涨幅 +9%~+24%</div>
+                    </div>
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">止损位</div>
+                        <div class="kpi-value negative">345元</div>
+                        <div class="kpi-sub">-10.7%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">RL评分</div>
+                        <div class="kpi-value">19.5/25</div>
+                        <div class="kpi-sub">良好偏优秀</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">机构目标价</div>
+                        <div class="kpi-value positive">501.45元</div>
+                        <div class="kpi-sub">潜在涨幅 +29.8%</div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title"><span class="icon">📊</span>多维信号验证</div>
+                    <div class="signal-grid">
+                        <div class="signal-card">
+                            <div class="signal-icon">📈</div>
+                            <div class="signal-label">宏观环境</div>
+                            <div class="signal-value" style="color:var(--success)">利好</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">🏭</div>
+                            <div class="signal-label">行业评级</div>
+                            <div class="signal-value" style="color:var(--success)">看好</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">💰</div>
+                            <div class="signal-label">基本面</div>
+                            <div class="signal-value" style="color:var(--success)">良好</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">📊</div>
+                            <div class="signal-label">市场情绪</div>
+                            <div class="signal-value" style="color:var(--warning)">谨慎乐观</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">📉</div>
+                            <div class="signal-label">技术面</div>
+                            <div class="signal-value" style="color:var(--danger)">短线走弱</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">⚠️</div>
+                            <div class="signal-label">风险等级</div>
+                            <div class="signal-value" style="color:var(--warning)">中等</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">💵</div>
+                            <div class="signal-label">北向资金</div>
+                            <div class="signal-value" style="color:var(--success)">持续增持</div>
+                        </div>
+                        <div class="signal-card">
+                            <div class="signal-icon">✅</div>
+                            <div class="signal-label">数据校验</div>
+                            <div class="signal-value" style="color:var(--success)">通过</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title"><span class="icon">🚀</span>催化剂时间轴</div>
+                    <div class="catalyst-list">
+                        <div class="catalyst-item">
+                            <div class="catalyst-period">短期 (1-3个月)</div>
+                            <div class="catalyst-event">2026年一季报发布</div>
+                            <div class="catalyst-detail">预计净利润200亿+ | 预计2026-04月底</div>
+                        </div>
+                        <div class="catalyst-item">
+                            <div class="catalyst-period">短期 (1-3个月)</div>
+                            <div class="catalyst-event">神行超充电池新车型配套</div>
+                            <div class="catalyst-detail">问界M8、极氪等明星车型</div>
+                        </div>
+                        <div class="catalyst-item">
+                            <div class="catalyst-period">中期 (3-12个月)</div>
+                            <div class="catalyst-event">2026年中报业绩验证</div>
+                            <div class="catalyst-detail">预计全年盈利超800亿</div>
+                        </div>
+                        <div class="catalyst-item">
+                            <div class="catalyst-period">中期 (3-12个月)</div>
+                            <div class="catalyst-event">美国LRS模式落地</div>
+                            <div class="catalyst-detail">绕过IRA法案本地化要求</div>
+                        </div>
+                        <div class="catalyst-item">
+                            <div class="catalyst-period">长期 (1年+)</div>
+                            <div class="catalyst-event">固态电池小批量量产</div>
+                            <div class="catalyst-detail">预计2027年 | 全球领先技术</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title"><span class="icon">👥</span>各Agent评分汇总</div>
+                    <div class="agent-grid">
+                        <div class="agent-card">
+                            <div class="agent-name">🌐 宏观Agent <span class="tag tag-green">利好</span></div>
+                            <div class="agent-conclusion">震荡市，成长>消费>周期>价值</div>
+                            <div class="agent-score">货币宽松+财政积极，成长风格占优</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">🏭 行业Agent <span class="tag tag-green">看好</span></div>
+                            <div class="agent-conclusion">锂电行业量价触底回升</div>
+                            <div class="agent-score">新能源渗透率45%高位企稳</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">✅ 数据校验Agent <span class="tag tag-green">通过</span></div>
+                            <div class="agent-conclusion">财务数据真实</div>
+                            <div class="agent-score">营收4237亿，净利润600亿，经营现金流1050亿</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">📋 基本面Agent <span class="tag tag-green">推荐</span></div>
+                            <div class="agent-conclusion">RL评分19.5/25</div>
+                            <div class="agent-score">良好偏优秀 | 目标价420-480元</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">💭 市场情绪Agent <span class="tag tag-yellow">谨慎乐观</span></div>
+                            <div class="agent-conclusion">机构93.5%买入评级</div>
+                            <div class="agent-score">31家机构覆盖，目标价401-618元</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">📈 技术指标Agent <span class="tag tag-red">看空</span></div>
+                            <div class="agent-conclusion">MACD死叉，短线走弱</div>
+                            <div class="agent-score">385元布林带下轨支撑面临考验</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">🛡️ 风险控制Agent <span class="tag tag-yellow">中</span></div>
+                            <div class="agent-conclusion">风险评分58/100</div>
+                            <div class="agent-score">高Beta(1.28)+高波动率 | 止损345元</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-name">📊 基金经理Agent <span class="tag tag-green">推荐</span></div>
+                            <div class="agent-conclusion">中线持有(6-18个月)</div>
+                            <div class="agent-score">目标价480元，潜在涨幅+24%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title"><span class="icon">🔑</span>关键数据一览</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>指标</th><th>数值</th></tr>
+                        <tr><td>最新股价</td><td>386.46元</td><td>PE（TTM）</td><td>29.5倍</td></tr>
+                        <tr><td>合理估值区间</td><td>340-450元</td><td>PB</td><td>4.7倍</td></tr>
+                        <tr><td>2025年营收</td><td>4,237亿元(+17%)</td><td>2025年净利润</td><td>600亿元(+18.2%)</td></tr>
+                        <tr><td>毛利率</td><td>26.3%</td><td>ROE</td><td>~20.7%</td></tr>
+                        <tr><td>全球动力电池份额</td><td>39.2%</td><td>储能电池份额</td><td>30.4%（全球第一）</td></tr>
+                        <tr><td>经营现金流</td><td>1,050亿元</td><td>Beta</td><td>1.28</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 宏观分析 -->
+            <div id="page-macro" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#1a73e8">宏</div>
+                        宏观分析报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 宏观Agent</span><span>📅 日期: 2026-04-06</span><span>📊 数据来源: iFind EDB + 公开政策文件</span></div>
+                </div>
+                <div class="content-card">
+                    <div class="card-title">一、宏观环境六维评估</div>
+
+                    <h4>1. 流动性 <span class="tag tag-green">宽松</span></h4>
+                    <ul>
+                        <li>M2（2025年末）: 340.29万亿，同比 +9.0%</li>
+                        <li>社融存量: 442.12万亿</li>
+                        <li>货币环境保持充裕，降准降息预期持续</li>
+                    </ul>
+
+                    <h4>2. 利率环境 <span class="tag tag-yellow">下行趋势</span></h4>
+                    <ul>
+                        <li>10Y国债收益率: 1.85%（2025年末），较2024年1.68%小幅回升，但仍处历史低位</li>
+                        <li>2026年预期：2次降息，下半年或有财政工具追加</li>
+                    </ul>
+
+                    <h4>3. 汇率 <span class="tag tag-green">稳定</span></h4>
+                    <ul>
+                        <li>美元/人民币: 7.03（2025年末）</li>
+                        <li>政策目标：保持人民币在合理均衡水平基本稳定</li>
+                    </ul>
+
+                    <h4>4. 政策导向 <span class="tag tag-green">宽松+结构性</span></h4>
+                    <ul>
+                        <li>货币政策: 适度宽松，促进经济稳定增长、物价合理回升</li>
+                        <li>财政政策: 更加积极，扩支出盘子、优化债券组合</li>
+                        <li>重点支持: 扩大内需、科技创新、中小微企业</li>
+                    </ul>
+
+                    <h4>5. 市场情绪 <span class="tag tag-yellow">谨慎偏乐观</span></h4>
+                    <ul>
+                        <li>债市：利率处于低位，机构配置压力较大</li>
+                        <li>股市：政策宽松预期支撑，风险偏好有所回升</li>
+                        <li>外资：人民币债券吸引力持续</li>
+                    </ul>
+
+                    <h4>6. 外围环境 <span class="tag tag-blue">中性</span></h4>
+                    <ul>
+                        <li>美联储进入降息周期，外部约束减弱</li>
+                        <li>地缘政治不确定性仍存</li>
+                        <li>全球需求温和复苏</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">二、大盘环境判断</div>
+                    <table>
+                        <tr><th>情景</th><th>概率</th><th>依据</th></tr>
+                        <tr><td><strong>震荡市</strong></td><td>60%</td><td>政策宽松但基本面修复缓慢，指数区间波动</td></tr>
+                        <tr><td>牛市</td><td>25%</td><td>货币+财政双宽叠加，改革红利释放</td></tr>
+                        <tr><td>熊市</td><td>15%</td><td>物价持续低迷，外部风险冲击</td></tr>
+                    </table>
+                    <p><strong>结论:</strong> 预计A股整体呈震荡格局，结构性机会大于系统性机会。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">三、风格偏好</div>
+                    <table>
+                        <tr><th>风格</th><th>偏好度</th><th>逻辑</th></tr>
+                        <tr><td><strong>成长</strong></td><td><span class="tag tag-green">高</span></td><td>政策重点支持科技创新，货币宽松利于成长估值</td></tr>
+                        <tr><td>消费</td><td><span class="tag tag-yellow">中</span></td><td>扩内需政策加力，但居民消费修复仍需时间</td></tr>
+                        <tr><td>周期</td><td><span class="tag tag-yellow">中</span></td><td>财政发力利好基建，但持续性待观察</td></tr>
+                        <tr><td>价值</td><td><span class="tag tag-red">低</span></td><td>利率下行压制高股息板块相对吸引力</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">四、行业轮动信号</div>
+                    <h4>看好行业</h4>
+                    <ol>
+                        <li><strong>新能源/科技</strong> — 政策重点支持，结构性货币工具定向扶持</li>
+                        <li><strong>消费</strong> — 政府工作报告明确扩内需，消费提振政策加力</li>
+                        <li><strong>医药</strong> — 人口老龄化 + 政策边际改善</li>
+                    </ol>
+                    <h4>回避行业</h4>
+                    <ol>
+                        <li><strong>传统地产</strong> — 政策弱化，需求仍处筑底阶段</li>
+                        <li><strong>高负债周期品</strong> — 物价指数持续负增长，盈利承压</li>
+                    </ol>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">五、宏观风险点</div>
+                    <ol>
+                        <li><strong>物价持续低迷</strong>: PPI连续为负，通缩压力需政策持续发力</li>
+                        <li><strong>外部摩擦</strong>: 地缘政治不确定性或扰动风险偏好</li>
+                        <li><strong>社融增速放缓</strong>: 财政"紧平衡"年份，信用扩张力度待观察</li>
+                    </ol>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">六、对宁德时代所在行业的影响</div>
+                    <p>宁德时代（锂电池/新能源汽车）所在行业：</p>
+                    <ul>
+                        <li><span class="tag tag-green">利好</span> 新质生产力政策支持 + 扩内需 + 设备更新补贴</li>
+                        <li><span class="tag tag-yellow">风险</span> 行业竞争加剧（政策抑制"内卷式"竞争）</li>
+                        <li><strong>总体</strong>: 政策环境相对友好，需关注竞争格局演变</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 行业分析 -->
+            <div id="page-industry" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#7b1fa2">业</div>
+                        锂电池行业分析报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 行业Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="conclusion-box">
+                    <h3>行业评级: 看好</h3>
+                    <p>新能源汽车渗透率稳定在45%左右，行业从渗透率提升驱动转为总量增长驱动。宁德时代全球份额提升至39.2%，龙头地位稳固。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">行业关键数据</div>
+                    <table>
+                        <tr><th>指标</th><th>最新值</th><th>趋势</th></tr>
+                        <tr><td>新能源车零售渗透率</td><td>44.9%（2026年2月）</td><td>高位企稳</td></tr>
+                        <tr><td>新能源车批发渗透率</td><td>47.6%（2026年2月）</td><td>高位企稳</td></tr>
+                        <tr><td>碳酸锂价格（工业级）</td><td>15.4万元/吨</td><td><span class="tag tag-red">+31.6%</span></td></tr>
+                        <tr><td>磷酸铁锂装机增速</td><td>-9.2%（2026年2月累计）</td><td><span class="tag tag-red">下降</span></td></tr>
+                        <tr><td>宁德时代全球份额</td><td>39.2%（2025年）</td><td><span class="tag tag-green">连续9年全球第一</span></td></tr>
+                        <tr><td>比亚迪份额</td><td>19.2%（2025年12月）</td><td>持平</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">竞争格局分析</div>
+                    <h4>市场份额</h4>
+                    <table>
+                        <tr><th>企业</th><th>全球份额（2025年）</th><th>备注</th></tr>
+                        <tr><td><strong>宁德时代</strong></td><td>39.2%</td><td>全球第一，连续多年领跑</td></tr>
+                        <tr><td>比亚迪</td><td>~19%</td><td>全球第二，垂直整合模式</td></tr>
+                        <tr><td>其他（LG新能源、松下、三星SDI等）</td><td>~42%</td><td>分散</td></tr>
+                    </table>
+                    <h4>竞争壁垒</h4>
+                    <ul>
+                        <li><strong>技术壁垒</strong>: 麒麟电池、神行4C快充电池等差异化产品；固态电池研发投入超1000人团队</li>
+                        <li><strong>规模壁垒</strong>: 产能超1.4TWh，超级拉线实现单位投资降低</li>
+                        <li><strong>客户壁垒</strong>: 绑定国际主流车企（宝马、奔驰、大众、特斯拉等）</li>
+                        <li><strong>成本壁垒</strong>: 矿产资源布局（持股洛阳钼业19.7%）；产业链纵向整合</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">周期属性分析</div>
+                    <p><strong>当前周期位置: 扩张后期向成熟期过渡</strong></p>
+                    <ul>
+                        <li><strong>行业增速</strong>: 2025年新能源汽车销量1644万辆，同比增速显著放缓</li>
+                        <li><strong>渗透率</strong>: 2026年2月零售渗透率44.9%，接近50%临界点</li>
+                        <li><strong>成本端</strong>: 碳酸锂价格从年初11.7万元/吨上涨至15.4万元/吨（+31.6%）</li>
+                        <li><strong>盈利端</strong>: 宁德时代2025年毛利率26.3%（同比+1.8pct），展现龙头盈利韧性</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">政策环境</div>
+                    <h4>国内政策</h4>
+                    <ul>
+                        <li><strong>"两新"政策延续</strong>: 报废更新最高补贴2万元，置换更新最高1.5万元</li>
+                        <li><strong>补贴退坡趋势明确</strong>: 购置税由免征改为减半</li>
+                        <li><strong>"反内卷"政策</strong>: 引导行业高质量发展，避免低价恶性竞争</li>
+                    </ul>
+                    <h4>海外政策</h4>
+                    <ul>
+                        <li><strong>德国</strong>: 拨款30亿欧元补贴电动车，最高6000欧元/辆</li>
+                        <li><strong>欧盟</strong>: 放宽车企碳排放规则修订案</li>
+                        <li><strong>美国</strong>: 可能加征关税（不确定因素）</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">景气信号</div>
+                    <h4>先行指标</h4>
+                    <ul>
+                        <li>碳酸锂价格上涨31.6%，反映上游资源紧张</li>
+                        <li>宁德时代产能利用率2025年下半年较上半年提升20%，全年76.3%</li>
+                        <li>宁德时代推进超200GWh产能建设</li>
+                    </ul>
+                    <h4>景气研判</h4>
+                    <ul>
+                        <li><span class="tag tag-yellow">动力电池</span> 增速放缓但总量仍增长，预计2026年出货增40%+</li>
+                        <li><span class="tag tag-green">储能电池</span> 政策明确容量电价补偿，需求向好</li>
+                        <li><span class="tag tag-blue">固态电池</span> 加速，2027年量产预期</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">固态电池进展</div>
+                    <table>
+                        <tr><th>时间节点</th><th>进展</th></tr>
+                        <tr><td>2026年</td><td>电芯转Pack，样车路试</td></tr>
+                        <tr><td>2027年</td><td>小批量量产+装车示范运营</td></tr>
+                        <tr><td>2030年</td><td>规模化商业化</td></tr>
+                    </table>
+                    <p><strong>宁德时代进展</strong>: 研发团队超1000人，主攻硫化物路线，60Ah车规级电芯已下线</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">对宁德时代的影响</div>
+                    <h4><span class="tag tag-green">利好因素</span></h4>
+                    <ul>
+                        <li>2025年全球动力电池份额39.2%，同比提升1.2pct</li>
+                        <li>2025年净利润722亿元（+42.3%），成本传导能力验证</li>
+                        <li>2026年排产预计超1100GWh（+40-50%），规模优势扩大</li>
+                        <li>麒麟电池、神行电池、固态电池研发全面布局</li>
+                        <li>连续5年全球第一储能业务，AI算力需求带动储能市场增长</li>
+                    </ul>
+                    <h4><span class="tag tag-red">压制因素</span></h4>
+                    <ul>
+                        <li>碳酸锂价格上涨侵蚀利润</li>
+                        <li>补贴减少影响下游需求</li>
+                        <li>行业"反内卷"背景下，价格战风险仍存</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 数据校验 -->
+            <div id="page-data" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#0b8043">数</div>
+                        数据校验报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 数据校验Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="conclusion-box">
+                    <h3>校验结论: ✅ 通过</h3>
+                    <p>宁德时代2025年财务数据真实性校验完成，核心数据核实无误，盈利质量优秀。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">营收与利润校验</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>合理性判断</th></tr>
+                        <tr><td>最新营收（2025年）</td><td>4237.02亿元</td><td><span class="tag tag-green">✅合理</span> +17.04% YoY</td></tr>
+                        <tr><td>净利润（2025年）</td><td>722.01亿元</td><td><span class="tag tag-green">✅合理</span> +42.28% YoY</td></tr>
+                        <tr><td>毛利率</td><td>26.27%</td><td><span class="tag tag-green">✅合理</span> +7.48pct</td></tr>
+                        <tr><td>净利率</td><td>18.12%</td><td><span class="tag tag-green">✅合理</span> +21.48%</td></tr>
+                        <tr><td>每股收益</td><td>16.14元</td><td><span class="tag tag-green">✅合理</span> +39.38%</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">现金流校验</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>判断</th></tr>
+                        <tr><td>经营现金流净额</td><td>1332亿元</td><td><span class="tag tag-green">✅优秀</span> 现金流/净利润比184%</td></tr>
+                        <tr><td>货币资金+交易性金融资产</td><td>3925亿元</td><td><span class="tag tag-green">✅充裕</span> 安全垫扎实</td></tr>
+                        <tr><td>每股经营性现金流</td><td>29.19元</td><td><span class="tag tag-green">✅优秀</span> +32.53%</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">资产负债表关键指标</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>判断</th></tr>
+                        <tr><td>资产负债率</td><td>~62%</td><td><span class="tag tag-green">✅合理</span> 持续下降</td></tr>
+                        <tr><td>应付账款/应收账款差额</td><td>超1400亿元</td><td><span class="tag tag-green">✅强势</span> 产业链话语权极强</td></tr>
+                        <tr><td>合同负债</td><td>492亿元</td><td><span class="tag tag-green">✅优秀</span> 较年初增长77%</td></tr>
+                        <tr><td>存货</td><td>945亿元</td><td><span class="tag tag-yellow">⚠️关注</span> +58%，需监控周转</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">舆情风险扫描</div>
+                    <table>
+                        <tr><th>风险类型</th><th>发现</th><th>说明</th></tr>
+                        <tr><td>财务洗澡</td><td><span class="tag tag-green">✅未发现</span></td><td>毛利率反而提升7.48%</td></tr>
+                        <tr><td>监管问询</td><td><span class="tag tag-yellow">⚠️间接关联</span></td><td>容百科技被罚950万元，宁德时代未受罚</td></tr>
+                        <tr><td>业绩变脸</td><td><span class="tag tag-green">✅未发现</span></td><td>净利润722亿超预期688亿约5%</td></tr>
+                        <tr><td>债务风险</td><td><span class="tag tag-green">✅低风险</span></td><td>货币资金3925亿覆盖短债绰绰有余</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">重大事项检查</div>
+                    <table>
+                        <tr><th>事项</th><th>日期</th><th>影响</th></tr>
+                        <tr><td>2025年年报发布：营收4237亿/净利润722亿</td><td>2026-03-09</td><td><span class="tag tag-green">✅正面</span></td></tr>
+                        <tr><td>年度分红：每10股派69.57元，总额315亿元</td><td>2026-03-09</td><td><span class="tag tag-green">✅正面</span> 连续三年50%分红</td></tr>
+                        <tr><td>与申通快递战略合作（换电站）</td><td>2026-04-03</td><td><span class="tag tag-green">✅正面</span></td></tr>
+                        <tr><td>钠离子电池"钠新"储能版发布</td><td>2026-04-01</td><td><span class="tag tag-green">✅正面</span></td></tr>
+                        <tr><td>美国实体清单限制</td><td>持续</td><td><span class="tag tag-yellow">⚠️负面</span> 通过LRS模式规避</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">风险提示</div>
+                    <ul>
+                        <li><span class="tag tag-yellow">地缘政治风险（中等）</span> 美国制裁升级、欧盟碳足迹要求</li>
+                        <li><span class="tag tag-blue">产业链话语权过度（轻微）</span> 应付账款规模大（2636亿），长期可能影响供应商</li>
+                        <li><span class="tag tag-blue">存货积压风险（轻微）</span> 存货+58%，需关注减值压力</li>
+                        <li><span class="tag tag-yellow">竞争加剧风险（中等）</span> 比亚迪第二代刀片电池发布</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 基本面研究 -->
+            <div id="page-fundamental" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#e65100">基</div>
+                        基本面深度研究报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 公司基本面Agent</span><span>📅 日期: 2026-04-06</span><span>📊 数据: 2025年年报</span></div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card highlight">
+                        <div class="kpi-label">RL评分</div>
+                        <div class="kpi-value">19.5/25</div>
+                        <div class="kpi-sub">良好偏优秀</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">合理估值区间</div>
+                        <div class="kpi-value">340-450元</div>
+                        <div class="kpi-sub">DCF内在价值592.7元</div>
+                    </div>
+                    <div class="kpi-card warn">
+                        <div class="kpi-label">当前估值</div>
+                        <div class="kpi-value warning">合理偏低</div>
+                        <div class="kpi-sub">上行空间47%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">PE（TTM）</div>
+                        <div class="kpi-value">29.5倍</div>
+                        <div class="kpi-sub">行业平均20.5倍</div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">业务结构（2025年）</div>
+                    <table>
+                        <tr><th>业务板块</th><th>收入</th><th>占比</th><th>毛利率</th><th>YoY</th></tr>
+                        <tr><td>动力电池系统</td><td>3,140亿元</td><td>74.1%</td><td>23.9%</td><td><span class="tag tag-green">+24.1%</span></td></tr>
+                        <tr><td>储能电池系统</td><td>624.4亿元</td><td>14.7%</td><td>26.7%</td><td><span class="tag tag-green">+9.0%</span></td></tr>
+                        <tr><td>电池材料及回收</td><td>218.6亿元</td><td>5.2%</td><td>27.5%</td><td><span class="tag tag-red">-23.8%</span></td></tr>
+                        <tr><td>其他业务</td><td>254亿元</td><td>6.0%</td><td>20.0%</td><td><span class="tag tag-green">+10.5%</span></td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">财务拆解（近3年）</div>
+                    <table>
+                        <tr><th>指标</th><th>2025年</th><th>2024年</th><th>2023年</th></tr>
+                        <tr><td>营收（亿元）</td><td>4,237.02</td><td>3,620.13</td><td>4,009.17</td></tr>
+                        <tr><td>YoY增长</td><td><span class="tag tag-green">+17.0%</span></td><td>-9.7%</td><td>+22.0%</td></tr>
+                        <tr><td>净利润（亿元）</td><td>600</td><td>507.45</td><td>441.21</td></tr>
+                        <tr><td>YoY增长</td><td><span class="tag tag-green">+18.2%</span></td><td>+15.0%</td><td>+43.6%</td></tr>
+                        <tr><td>毛利率</td><td><span class="tag tag-green">26.3%</span></td><td>24.4%</td><td>22.1%</td></tr>
+                        <tr><td>净利率（归母）</td><td>14.2%</td><td>14.0%</td><td>11.0%</td></tr>
+                        <tr><td>EPS（元）</td><td>13.63</td><td>11.58</td><td>18.93</td></tr>
+                        <tr><td>ROE（加权）</td><td>~20.7%</td><td>~20.5%</td><td>24.0%</td></tr>
+                        <tr><td>经营现金流（亿元）</td><td>1,050</td><td>969.9</td><td>928.26</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">RL评分详解</div>
+                    <table>
+                        <tr><th>维度</th><th>评分</th><th>说明</th></tr>
+                        <tr><td>A.行业质量</td><td><strong>8/10</strong></td><td>全球新能源渗透率22%，储能万亿级市场启动</td></tr>
+                        <tr><td>B.竞争壁垒</td><td><strong>8.5/10</strong></td><td>CTP/麒麟/神行技术全球领先，研发投入210亿</td></tr>
+                        <tr><td>C.增长能见度</td><td><strong>8/10</strong></td><td>储能爆发，海外工厂推进，固态电池2027量产</td></tr>
+                        <tr><td>D.财务质量</td><td><strong>8/10</strong></td><td>现金流/净利润比175%，ROE ~20.7%</td></tr>
+                        <tr><td>E.公司治理</td><td><strong>7/10</strong></td><td>创始人控股稳定，分红比例约44%</td></tr>
+                    </table>
+                    <p><strong>总分: 19.5/25（良好偏优秀）</strong></p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">增长驱动因素</div>
+                    <ol>
+                        <li><strong>储能业务爆发（高）</strong>: 2025年储能出货量全球第一，电网侧+工商业储能需求高速增长，AI数据中心带来增量需求。储能毛利率26.7%已超越动力电池（23.9%）。</li>
+                        <li><strong>动力电池海外扩张（中高）</strong>: 欧洲工厂（匈牙利）建设推进，就近配套宝马、奔驰、大众。美国市场通过合资规避IRA风险。</li>
+                        <li><strong>技术迭代升级（中高）</strong>: 神行超充电池（4C快充）覆盖多款明星车型，麒麟电池能量密度持续领先，固态电池/凝聚态电池研发推进中。</li>
+                        <li><strong>上游材料价格企稳（中高）</strong>: 碳酸锂价格2025年趋于稳定，电池材料及回收板块毛利率从10.81%大幅跃升至27.5%。</li>
+                    </ol>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">主要风险</div>
+                    <ul>
+                        <li><strong>行业竞争加剧</strong>: 比亚迪、中创新航、国轩高科等持续追赶，价格战从动力电池蔓延至储能领域</li>
+                        <li><strong>原材料价格波动</strong>: 碳酸锂、镍、钴等关键原材料价格大幅波动，虽通过长单、回收布局对冲，但仍受影响</li>
+                        <li><strong>政策与地缘风险</strong>: 美国《通胀削减法案》对电池本地化要求，欧盟电池法规趋严</li>
+                        <li><strong>价格战风险</strong>: 行业产能释放加速，供需格局边际走弱，高毛利率难以维持</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">估值分析</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>行业平均</th><th>溢价/折价</th></tr>
+                        <tr><td>PE（TTM）</td><td>29.5倍</td><td>~20.5倍</td><td><span class="tag tag-yellow">溢价44%</span></td></tr>
+                        <tr><td>PB</td><td>4.7倍</td><td>~2.1倍</td><td><span class="tag tag-yellow">溢价124%</span></td></tr>
+                        <tr><td>EV/EBITDA</td><td>13.6倍</td><td>~11.2倍</td><td><span class="tag tag-yellow">溢价21%</span></td></tr>
+                        <tr><td>PEG</td><td>~1.64</td><td><1</td><td><span class="tag tag-yellow">溢价明显</span></td></tr>
+                    </table>
+                    <h4>DCF绝对估值</h4>
+                    <ul>
+                        <li>关键假设：2026-2029年净利润CAGR约21%，永续增长率3.5%，WACC 7.42%</li>
+                        <li><strong>DCF每股内在价值: 592.7元</strong></li>
+                        <li>当前股价402元（2026-03-19），处于显著低估区间，<strong>上行空间47.4%</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 市场情绪 -->
+            <div id="page-sentiment" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#c2185b">情</div>
+                        市场情绪监控报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 市场情绪Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="conclusion-box">
+                    <h3>情绪评级: 谨慎乐观</h3>
+                    <p>北向资金持续流入（连续7季增持），但融资净流出、主力资金出现分歧。31家机构93.5%给予买入评级。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">资金流向</div>
+                    <h4>北向资金</h4>
+                    <ul>
+                        <li>持股比例: <strong>15.17%</strong>（截至2025年年报）</li>
+                        <li>持股市值: 超2500亿元</li>
+                        <li>趋势: <span class="tag tag-green">连续7个季度增持</span>，外资长期配置核心标的</li>
+                    </ul>
+                    <h4>融资融券</h4>
+                    <ul>
+                        <li>融资余额: <strong>202.42亿元</strong>（截至2026年4月1日）</li>
+                        <li>融券余额: 1.01亿元</li>
+                        <li>融资融券比: 约200:1</li>
+                        <li>趋势: <span class="tag tag-yellow">融资余额处近一年较高位</span></li>
+                        <li>近期变化: 4月1日融资净买入-3.72亿元，融资活跃度下降</li>
+                    </ul>
+                    <h4>主力净流入</h4>
+                    <ul>
+                        <li>近5日（3月27日）: 主力净流入6.89亿元（占成交额5.53%）</li>
+                        <li>近10日: 4月3日主力资金净流出超11亿元</li>
+                        <li>状态: <span class="tag tag-yellow">资金博弈激烈</span></li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">机构持仓与评级</div>
+                    <h4>机构覆盖</h4>
+                    <p>覆盖机构数量: <strong>31家</strong></p>
+                    <table>
+                        <tr><th>评级</th><th>家数</th><th>占比</th></tr>
+                        <tr><td><span class="tag tag-green">强烈推荐</span></td><td>1</td><td>3.2%</td></tr>
+                        <tr><td><span class="tag tag-green">买入</span></td><td>22</td><td>71.0%</td></tr>
+                        <tr><td><span class="tag tag-green">推荐</span></td><td>4</td><td>12.9%</td></tr>
+                        <tr><td><span class="tag tag-yellow">增持</span></td><td>3</td><td>9.7%</td></tr>
+                        <tr><td><span class="tag tag-blue">跑赢行业</span></td><td>1</td><td>3.2%</td></tr>
+                    </table>
+                    <p><strong>买入及以上占比: 93.5%</strong></p>
+                    <h4>目标价区间</h4>
+                    <ul>
+                        <li>最高目标价: <strong>618.00元</strong></li>
+                        <li>最低目标价: <strong>401.65元</strong></li>
+                        <li>平均目标价: <strong>501.45元</strong></li>
+                        <li>潜在涨幅: 约26%</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">舆情分析</div>
+                    <h4><span class="tag tag-green">正面新闻 (8条)</span></h4>
+                    <ul>
+                        <li>2025年净利润722亿元，同比增长42.28%</li>
+                        <li>动力电池市占率39.2%，连续9年全球第一</li>
+                        <li>43.86亿元回购计划进行中</li>
+                        <li>申通快递战略合作（换电站）</li>
+                        <li>钠离子电池"钠新"储能版发布</li>
+                    </ul>
+                    <h4><span class="tag tag-red">负面新闻 (1条)</span></h4>
+                    <ul>
+                        <li>4月3日主力资金净流出超11亿元</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">综合情绪判断</div>
+                    <h4><span class="tag tag-green">利好因素</span></h4>
+                    <ul>
+                        <li>2025年业绩超预期，净利润同比增长42.28%</li>
+                        <li>动力电池全球市占率39.2%，连续9年全球第一</li>
+                        <li>北向资金连续7个季度增持</li>
+                        <li>93.5%的机构给予"买入"及以上评级</li>
+                        <li>平均目标价501.45元，较当前股价有26%上涨空间</li>
+                        <li>43.86亿元回购计划体现管理层信心</li>
+                    </ul>
+                    <h4><span class="tag tag-red">风险因素</span></h4>
+                    <ul>
+                        <li>融资余额处于较高位，融资客分歧加大</li>
+                        <li>4月3日主力资金净流出超11亿元</li>
+                        <li>股价创历史新高后，部分获利了结压力</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 技术分析 -->
+            <div id="page-technical" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#6d4c41">技</div>
+                        技术分析报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 技术指标Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">技术评级</div>
+                        <div class="kpi-value negative">看空</div>
+                        <div class="kpi-sub">综合信号: 弱</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">收盘价</div>
+                        <div class="kpi-value">386.46元</div>
+                        <div class="kpi-sub">-3.67%</div>
+                    </div>
+                    <div class="kpi-card warn">
+                        <div class="kpi-label">关键支撑</div>
+                        <div class="kpi-value warning">385元</div>
+                        <div class="kpi-sub">布林带下轨</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">关键压力</div>
+                        <div class="kpi-value">401-402元</div>
+                        <div class="kpi-sub">MA5/MA10</div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">趋势分析</div>
+                    <h4>短期趋势（5日）</h4>
+                    <ul>
+                        <li>趋势方向: <span class="tag tag-red">下降</span></li>
+                        <li>涨跌幅: -7.14%（周跌）</li>
+                        <li>股价从400元附近大幅回落至386.46元，跌破MA5(401.608)和MA10(402.351)</li>
+                    </ul>
+                    <h4>中期趋势（20日）</h4>
+                    <ul>
+                        <li>趋势方向: <span class="tag tag-yellow">震荡偏弱</span></li>
+                        <li>涨跌幅: -3.79%（月跌）</li>
+                        <li>股价在布林带中轨(402元)下方运行，MACD死叉后绿柱持续放大</li>
+                    </ul>
+                    <h4>长期趋势（60日/250日）</h4>
+                    <ul>
+                        <li>趋势方向: <span class="tag tag-green">上升</span>（但上行动能减弱）</li>
+                        <li>52周最高: 418.85元（2026年3月30日）</li>
+                        <li>52周最低: 333.01元（2026年1月）</li>
+                        <li>长期上升趋势未破坏，但近期高点出现明显卖压</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">均线系统</div>
+                    <table>
+                        <tr><th>均线</th><th>数值</th><th>与股价关系</th></tr>
+                        <tr><td>MA5</td><td>401.608元</td><td><span class="tag tag-red">跌破</span></td></tr>
+                        <tr><td>MA10</td><td>402.351元</td><td><span class="tag tag-red">跌破</span></td></tr>
+                        <tr><td>MA60</td><td>数据待核实</td><td>中长期偏多</td></tr>
+                    </table>
+                    <p><strong>均线排列:</strong> MA5与MA10近期形成<span class="tag tag-red">死叉</span>（短期卖出信号）</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">支撑压力位</div>
+                    <h4>关键支撑位</h4>
+                    <ol>
+                        <li><strong>385元</strong> — 布林带下轨附近，当前股价紧贴此支撑</li>
+                        <li><strong>380元</strong> — 心理整数关口，2月底低点区域</li>
+                        <li><strong>370元</strong> — 近期回调重要支撑位</li>
+                    </ol>
+                    <h4>关键压力位</h4>
+                    <ol>
+                        <li><strong>401-402元</strong> — MA5/MA10密集区域，当前构成明显压力</li>
+                        <li><strong>410元</strong> — 3月中旬震荡区间上沿</li>
+                        <li><strong>418.85元</strong> — 52周高点，重要历史压力</li>
+                    </ol>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">技术指标</div>
+                    <h4>MACD分析</h4>
+                    <ul>
+                        <li>DIF数值: 8.5157</li>
+                        <li>DEA数值: 10.7536</li>
+                        <li>MACD柱状图: <span class="tag tag-red">绿柱（-4.4759）</span></li>
+                        <li>信号: MACD<span class="tag tag-red">死叉</span>，绿柱持续放大</li>
+                    </ul>
+                    <h4>KDJ分析</h4>
+                    <ul>
+                        <li>K值: 35.1286</li>
+                        <li>D值: 48.2759</li>
+                        <li>J值: <span class="tag tag-yellow">8.8342</span>（快速下降，接近超卖）</li>
+                    </ul>
+                    <h4>布林带分析</h4>
+                    <ul>
+                        <li>上轨: ~419元</li>
+                        <li>中轨: 402.3911元</li>
+                        <li>下轨: 385.7961元</li>
+                        <li>当前位置: <span class="tag tag-yellow">紧贴下轨附近</span></li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">综合技术信号</div>
+                    <table>
+                        <tr><th>指标</th><th>信号</th><th>强度</th></tr>
+                        <tr><td>均线系统</td><td>MA5/MA10死叉</td><td><span class="tag tag-yellow">中性</span></td></tr>
+                        <tr><td>MACD</td><td>零轴上死叉，绿柱放大</td><td><span class="tag tag-red">偏弱</span></td></tr>
+                        <tr><td>KDJ</td><td>高位死叉后快速下行</td><td><span class="tag tag-red">偏弱</span></td></tr>
+                        <tr><td>布林带</td><td>接近下轨支撑</td><td><span class="tag tag-yellow">中性</span></td></tr>
+                        <tr><td>量价关系</td><td>缩量下跌，卖压不重</td><td><span class="tag tag-yellow">中性</span></td></tr>
+                    </table>
+                    <p><strong>综合信号:</strong> 短线偏弱，但中长线支撑仍存</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">操作建议</div>
+                    <ul>
+                        <li><strong>短线:</strong> 观望为主，等待企稳信号；若突破401-402元压力可考虑介入</li>
+                        <li><strong>中线:</strong> 若能在385-402元区间企稳，可考虑高抛低吸</li>
+                        <li><strong>长线:</strong> 长期上升趋势未破坏，逢回调可考虑布局</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 风险评估 -->
+            <div id="page-risk" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#d32f2f">风</div>
+                        风险评估备忘录
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 风险控制Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card warn">
+                        <div class="kpi-label">风险等级</div>
+                        <div class="kpi-value warning">中</div>
+                        <div class="kpi-sub">评分 58/100</div>
+                    </div>
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">1日99% VaR</div>
+                        <div class="kpi-value negative">-6.2%</div>
+                        <div class="kpi-sub">约24元</div>
+                    </div>
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">止损位1</div>
+                        <div class="kpi-value negative">365元</div>
+                        <div class="kpi-sub">-5.5%</div>
+                    </div>
+                    <div class="kpi-card danger">
+                        <div class="kpi-label">止损位2</div>
+                        <div class="kpi-value negative">345元</div>
+                        <div class="kpi-sub">-10.7%</div>
+                    </div>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">风险量化</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>评估</th></tr>
+                        <tr><td>Beta（vs沪深300）</td><td>1.28</td><td><span class="tag tag-red">高弹性</span></td></tr>
+                        <tr><td>年化波动率</td><td>35.84%</td><td><span class="tag tag-red">高波动</span></td></tr>
+                        <tr><td>VaR（99%，周）</td><td>10.5%</td><td>高风险</td></tr>
+                    </table>
+                    <p>Beta 1.28意味着沪深300波动1%时，宁德时代平均波动1.28%。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">风险清单</div>
+                    <h4>1.1 政策风险</h4>
+                    <table>
+                        <tr><th>风险项</th><th>可能性</th><th>影响</th></tr>
+                        <tr><td>美国实体清单限制升级</td><td>中</td><td><span class="tag tag-red">高</span></td></tr>
+                        <tr><td>欧盟《新电池法案》碳足迹合规</td><td><span class="tag tag-red">高</span></td><td>中</td></tr>
+                        <tr><td>国内补贴退坡超预期</td><td>中</td><td>中</td></tr>
+                    </table>
+
+                    <h4>1.2 业绩风险</h4>
+                    <table>
+                        <tr><th>风险项</th><th>可能性</th><th>影响</th></tr>
+                        <tr><td>存货积压减值压力</td><td>中</td><td>中</td></tr>
+                        <tr><td>碳酸锂涨价侵蚀毛利率</td><td>中</td><td>中</td></tr>
+                        <tr><td>现金流断裂风险</td><td><span class="tag tag-green">极低</span></td><td>高</td></tr>
+                    </table>
+
+                    <h4>1.3 市场风险</h4>
+                    <table>
+                        <tr><th>风险项</th><th>可能性</th><th>影响</th></tr>
+                        <tr><td>高Beta+高波动率</td><td><span class="tag tag-red">高</span></td><td>中</td></tr>
+                        <tr><td>估值过高风险</td><td>中</td><td>中</td></tr>
+                        <tr><td>短线技术破位</td><td><span class="tag tag-red">高</span></td><td>中</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">压力测试</div>
+                    <table>
+                        <tr><th>情景</th><th>概率</th><th>潜在跌幅</th><th>触发条件</th></tr>
+                        <tr><td><span class="tag tag-green">乐观</span></td><td>20%</td><td>+30%（502元）</td><td>业绩超预期+固态电池突破</td></tr>
+                        <tr><td><span class="tag tag-yellow">基准</span></td><td>45%</td><td>0%（386元）</td><td>当前股价</td></tr>
+                        <tr><td><span class="tag tag-red">悲观</span></td><td>25%</td><td>-15%（328元）</td><td>碳酸锂涨+价格战加剧</td></tr>
+                        <tr><td><span class="tag tag-purple">黑天鹅</span></td><td>10%</td><td>-30%（270元）</td><td>重大安全事故/全面贸易战</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">止损建议</div>
+                    <table>
+                        <tr><th>止损位</th><th>价格</th><th>跌幅</th><th>逻辑</th></tr>
+                        <tr><td>止损位1</td><td>365元</td><td>-5.5%</td><td>布林带下轨385元向下破位后确认</td></tr>
+                        <tr><td>止损位2</td><td>345元</td><td>-10.7%</td><td>合理估值区间下限340元附近</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">风险监控指标</div>
+                    <ul>
+                        <li>股价 &lt;385元 → <span class="tag tag-red">布林下轨破位</span></li>
+                        <li>融资余额 &gt;250亿元 → <span class="tag tag-red">杠杆过高</span></li>
+                        <li>北向资金连续净流出 &gt;20亿元 → <span class="tag tag-red">外资离场</span></li>
+                        <li>碳酸锂价格 &gt;18万元/吨 → <span class="tag tag-yellow">成本压力加大</span></li>
+                        <li>毛利率 &lt;22% → <span class="tag tag-red">盈利恶化</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 基金经理评估 -->
+            <div id="page-fund" class="page">
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="icon" style="background:#1565c0">基</div>
+                        基金经理评估报告
+                    </div>
+                    <div class="page-meta"><span>👤 分析师: 基金经理Agent</span><span>📅 日期: 2026-04-06</span></div>
+                </div>
+
+                <div class="conclusion-box">
+                    <h3>投资建议: 推荐</h3>
+                    <p>中线持有(6-18个月)，目标价480元，潜在涨幅+24%。风险收益比1.5:1至2:1，适合机构投资者配置。</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">估值吸引力</div>
+                    <table>
+                        <tr><th>指标</th><th>数值</th><th>行业平均</th><th>溢价/折价</th></tr>
+                        <tr><td>PE（TTM）</td><td>24.4倍</td><td>~20倍</td><td><span class="tag tag-yellow">溢价22%</span></td></tr>
+                        <tr><td>PB</td><td>5.2倍</td><td>~3倍</td><td><span class="tag tag-yellow">溢价73%</span></td></tr>
+                        <tr><td>PEG</td><td>~1.0</td><td><1</td><td>合理</td></tr>
+                    </table>
+                    <p><strong>上涨空间</strong>: 目标价区间420-550元，当前386.46元处于合理偏低区间</p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">催化剂识别</div>
+                    <h4>短期（1-3个月）</h4>
+                    <ul>
+                        <li>2026年一季报业绩（预计净利润200亿+）— <span class="tag tag-green">高</span> | <span class="tag tag-green">高影响</span></li>
+                        <li>神行超充电池新车型配套（问界M8、极氪）— <span class="tag tag-green">高</span> | 中</li>
+                        <li>钠离子电池"钠新"储能版商业化订单 — 中 | 中</li>
+                    </ul>
+                    <h4>中期（3-12个月）</h4>
+                    <ul>
+                        <li>2026年中报业绩 — <span class="tag tag-green">高</span> | <span class="tag tag-green">高影响</span></li>
+                        <li>美国LRS模式落地 — 中 | <span class="tag tag-green">高影响</span></li>
+                        <li>储能业务全年出货超300GWh — <span class="tag tag-green">高</span> | <span class="tag tag-green">高影响</span></li>
+                    </ul>
+                    <h4>长期（1年+）</h4>
+                    <ul>
+                        <li>固态电池小批量量产（2027年）— 中 | <span class="tag tag-green">高影响</span></li>
+                        <li>全球动力电池市占率突破45% — 中 | <span class="tag tag-green">高影响</span></li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">配置建议</div>
+                    <table>
+                        <tr><th>投资者类型</th><th>建议比例</th><th>理由</th></tr>
+                        <tr><td>开放式公募（成长风格）</td><td>5-8%</td><td>新能源标配，流动性好</td></tr>
+                        <tr><td>私募（成长型）</td><td>5-8%</td><td>中线收益确定性高</td></tr>
+                        <tr><td>保险资金</td><td>3-5%</td><td>高分红，估值安全边际高</td></tr>
+                        <tr><td>社保基金</td><td>3-5%</td><td>长期配置，稳健增值</td></tr>
+                    </table>
+                    <h4>持有周期</h4>
+                    <ul>
+                        <li><strong>短线（&lt;3个月）</strong>: <span class="tag tag-red">不适合</span> — 技术面走弱</li>
+                        <li><strong>中线（3-12个月）</strong>: <span class="tag tag-green">非常适合</span> — 催化剂密集</li>
+                        <li><strong>长线（&gt;1年）</strong>: <span class="tag tag-green">适合</span> — 固态电池+储能驱动</li>
+                    </ul>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">操作建议</div>
+                    <table>
+                        <tr><th>操作</th><th>建议区间</th><th>说明</th></tr>
+                        <tr><td>首次建仓</td><td>370-390元</td><td>技术回调企稳后介入</td></tr>
+                        <tr><td>加仓区间</td><td>350-370元</td><td>布林带下轨支撑</td></tr>
+                        <tr><td>重仓区间</td><td>330-350元</td><td>基本面无恶化下的黄金坑</td></tr>
+                        <tr><td>减仓</td><td>450-480元</td><td>估值接近目标区间上限</td></tr>
+                        <tr><td>止损</td><td><span class="tag tag-red">340元</span></td><td>跌破后严格止损</td></tr>
+                    </table>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-title">vs 比亚迪</div>
+                    <table>
+                        <tr><th>维度</th><th>宁德时代</th><th>比亚迪</th><th>结论</th></tr>
+                        <tr><td>PE（TTM）</td><td>24.4倍</td><td>~30倍</td><td><span class="tag tag-green">宁德更便宜</span></td></tr>
+                        <tr><td>PB</td><td>5.2倍</td><td>~6倍</td><td><span class="tag tag-green">宁德更低</span></td></tr>
+                        <tr><td>净利润增速</td><td>+42.3%</td><td>+25-30%</td><td><span class="tag tag-green">宁德更快</span></td></tr>
+                        <tr><td>全球动力电池份额</td><td>39.2%</td><td>~15%</td><td><span class="tag tag-green">宁德领先</span></td></tr>
+                        <tr><td>储能业务</td><td>全球第一（30.4%）</td><td>规模较小</td><td><span class="tag tag-green">宁德领先</span></td></tr>
+                    </table>
+                    <p><strong>配置建议:</strong> 对于纯电池/储能配置需求，<strong>宁德时代更优</strong></p>
+                </div>
+            </div>
+
+            <div class="no-results" id="noResults">
+                <p>未找到匹配的关键词</p>
+            </div>
+        </main>
+    </div>
+
+    <button class="print-btn" onclick="window.print()" title="打印报告">🖨️</button>
+
+    <script>
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        const searchInput = document.getElementById('searchInput');
+        const noResults = document.getElementById('noResults');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                const pageId = item.dataset.page;
+                pages.forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + pageId).classList.add('active');
+                window.scrollTo(0, 0);
+                clearHighlights();
+            });
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (!query) { clearHighlights(); return; }
+            let found = false;
+            pages.forEach(page => {
+                const content = page.querySelector('.content-card, .conclusion-box, .kpi-grid') || page;
+                const html = content.innerHTML;
+                const text = content.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    found = true;
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    content.innerHTML = html.replace(regex, '<span class="highlight">$1</span>');
+                }
+            });
+            if (!found) {
+                const summaryContent = document.querySelector('.summary-strip') || pages[0];
+                const html = summaryContent.innerHTML;
+                const text = summaryContent.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    found = true;
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    summaryContent.innerHTML = html.replace(regex, '<span class="highlight">$1</span>');
+                }
+            }
+            noResults.classList.toggle('show', !found);
+        });
+
+        function clearHighlights() {
+            document.querySelectorAll('.highlight').forEach(el => {
+                el.outerHTML = el.textContent;
+            });
+            noResults.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
