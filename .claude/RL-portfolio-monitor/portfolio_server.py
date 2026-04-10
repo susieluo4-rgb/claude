@@ -38,6 +38,8 @@ _spec.loader.exec_module(_monitor)
 
 fetch_performance = _monitor.fetch_performance
 scan_single_holding = _monitor.scan_single_holding
+scan_all_announcements = _monitor.scan_all_announcements
+get_announcement_badge = _monitor.get_announcement_badge
 generate_html_report = _monitor.generate_html_report
 generate_interactive_html = _monitor.generate_interactive_html
 
@@ -46,6 +48,7 @@ _all_perf_data = []
 _triggered_alerts = []
 _holdings = []
 _last_refresh_time = ""
+_ann_data = {}  # {code: {tag, title, badge_html}, ...}
 
 
 def _load_holdings():
@@ -65,6 +68,7 @@ def _refresh_all_prices():
     for h in _holdings:
         perf = fetch_performance(h["code"])
         has_data = bool(perf.get("price", 0))
+        ann = _ann_data.get(h["code"])
         results.append({
             "code": h["code"],
             "name": h["name"],
@@ -72,6 +76,7 @@ def _refresh_all_prices():
             "change_pct": perf.get("change_pct", 0),
             "price": perf.get("price", 0),
             "has_data": has_data,
+            "ann_badge": ann["badge_html"] if ann else '<span class="badge-ann-neutral">无新公告</span>',
         })
         time.sleep(0.3)
     _all_perf_data = results
@@ -132,6 +137,8 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             self._api_refresh_all()
         elif path == "/api/status":
             self._api_status()
+        elif path == "/api/refresh_announcements":
+            self._api_refresh_announcements()
         else:
             self.send_error(404)
 
@@ -149,6 +156,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             return
         perf = fetch_performance(holding["code"])
         has_data = bool(perf.get("price", 0))
+        ann = _ann_data.get(holding["code"])
         result = {
             "code": holding["code"],
             "name": holding["name"],
@@ -156,6 +164,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             "change_pct": perf.get("change_pct", 0),
             "price": perf.get("price", 0),
             "has_data": has_data,
+            "ann_badge": ann["badge_html"] if ann else '<span class="badge-ann-neutral">无新公告</span>',
         }
         # 更新全局数据
         for i, d in enumerate(_all_perf_data):
@@ -219,6 +228,25 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             "last_refresh": _last_refresh_time,
             "holdings_count": len(_holdings),
         })
+
+    def _api_refresh_announcements(self):
+        """扫描所有持仓公告情感"""
+        global _ann_data
+        results = scan_all_announcements()
+        # 按 code 分组，每只股票取最新一条
+        ann_by_code = {}
+        for a in results:
+            code = a["code"]
+            if code not in ann_by_code:
+                badge_html = get_announcement_badge(a["tag"])
+                ann_by_code[code] = {
+                    "tag": a["tag"],
+                    "title": a["title"][:30],
+                    "sentiment": a["sentiment"],
+                    "badge_html": f'<span title="{a["title"][:30]}">{badge_html} {a["title"][:30]}</span>',
+                }
+        _ann_data = ann_by_code
+        self._json(200, {"data": ann_by_code, "count": len(ann_by_code)})
 
     def _json(self, code, data):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")

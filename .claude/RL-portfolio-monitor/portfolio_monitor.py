@@ -201,6 +201,14 @@ def generate_html_report(
   .badge-blue {{ background: rgba(99,102,241,0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
   .badge-na {{ background: rgba(139,143,163,0.08); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
   .badge-neutral {{ background: rgba(139,143,163,0.15); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
+  /* 公告情感 badge */
+  .badge-ann-major-pos {{ background: rgba(34,197,94,0.2); color: #4ade80; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; font-weight: 700; }}
+  .badge-ann-pos {{ background: rgba(34,197,94,0.12); color: #86efac; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-pos-light {{ background: rgba(34,197,94,0.06); color: #bbf7d0; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neutral {{ background: rgba(139,143,163,0.1); color: #8b8fa3; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neg-light {{ background: rgba(239,68,68,0.06); color: #fca5a5; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neg {{ background: rgba(239,68,68,0.12); color: #f87171; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-major-neg {{ background: rgba(239,68,68,0.2); color: #f87171; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; font-weight: 700; }}
   .row-red {{ background: rgba(239,68,68,0.04); }}
   .row-green {{ background: rgba(34,197,94,0.04); }}
   .row-red-light {{ background: rgba(239,68,68,0.02); }}
@@ -398,6 +406,27 @@ def generate_interactive_html(
     total_flat = len(data_rows) - total_up - total_down
     sorted_rows = sorted(data_rows, key=lambda x: x["change_str"], reverse=True) + na_rows
 
+    # 扫描所有持仓公告情感
+    ann_results = scan_all_announcements()
+    ann_by_code = {}
+    for a in ann_results:
+        code = a["code"]
+        if code not in ann_by_code:
+            ann_by_code[code] = []
+        ann_by_code[code].append(a)
+
+    # 为每行添加公告 badge
+    for r in sorted_rows:
+        anns = ann_by_code.get(r["code"], [])
+        if anns:
+            # 取最新一条公告的标签
+            latest = anns[0]
+            badge_html = get_announcement_badge(latest["tag"])
+            title_short = latest["title"][:30]
+            r["ann_badge"] = f'<span title="{title_short}">{badge_html} {title_short}</span>'
+        else:
+            r["ann_badge"] = '<span class="badge-ann-neutral">无新公告</span>'
+
     perf_rows_html = "\n".join(
         f'<tr class="{r["row_class"]}" data-code="{r["code"]}">'
         f'<td>{r["name"]}</td>'
@@ -405,6 +434,7 @@ def generate_interactive_html(
         f'<td class="num">{r["position_pct"]:.2f}%</td>'
         f'<td class="num">{r["badge"]}</td>'
         f'<td class="num">{r["contrib_str"]}</td>'
+        f'<td class="num">{r["ann_badge"]}</td>'
         f'</tr>'
         for r in sorted_rows
     )
@@ -467,6 +497,14 @@ def generate_interactive_html(
   .badge-blue {{ background: rgba(99,102,241,0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
   .badge-na {{ background: rgba(139,143,163,0.08); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
   .badge-neutral {{ background: rgba(139,143,163,0.15); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }}
+  /* 公告情感 badge */
+  .badge-ann-major-pos {{ background: rgba(34,197,94,0.2); color: #4ade80; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; font-weight: 700; }}
+  .badge-ann-pos {{ background: rgba(34,197,94,0.12); color: #86efac; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-pos-light {{ background: rgba(34,197,94,0.06); color: #bbf7d0; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neutral {{ background: rgba(139,143,163,0.1); color: #8b8fa3; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neg-light {{ background: rgba(239,68,68,0.06); color: #fca5a5; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-neg {{ background: rgba(239,68,68,0.12); color: #f87171; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; }}
+  .badge-ann-major-neg {{ background: rgba(239,68,68,0.2); color: #f87171; padding: 1px 6px; border-radius: 3px; font-size: 0.75rem; font-weight: 700; }}
   .row-red {{ background: rgba(239,68,68,0.04); }}
   .row-green {{ background: rgba(34,197,94,0.04); }}
   .row-red-light {{ background: rgba(239,68,68,0.02); }}
@@ -525,6 +563,9 @@ def generate_interactive_html(
   <button class="btn btn-alert" id="btn-alert" onclick="refreshAlerts()">
     <span id="alert-icon">🔔</span> 预警刷新
   </button>
+  <button class="btn btn-refresh" id="btn-ann" onclick="refreshAnnouncements()">
+    <span id="ann-icon">📋</span> 公告刷新
+  </button>
   <span class="refresh-info" id="refresh-info">{refresh_info}</span>
 </div>
 
@@ -566,6 +607,7 @@ def generate_interactive_html(
         <th class="num sortable" id="th-position" onclick="sortBy('position')"><span>持仓占比</span><span class="sort-arrow" id="arrow-position">▼</span></th>
         <th class="num sortable" id="th-change" onclick="sortBy('change')"><span>今日涨跌幅</span><span class="sort-arrow" id="arrow-change">▼</span></th>
         <th class="num sortable" id="th-contrib" onclick="sortBy('contrib')"><span>组合贡献</span><span class="sort-arrow" id="arrow-contrib">▼</span></th>
+        <th>最新公告</th>
       </tr>
     </thead>
     <tbody id="perf-table">
@@ -783,12 +825,14 @@ function updatePerfTable(data) {{
       ? (d.change_pct >= 5 ? 'row-red' : d.change_pct >= 3 ? 'row-red-light' :
          d.change_pct <= -5 ? 'row-green' : d.change_pct <= -3 ? 'row-green-light' : '')
       : 'row-na';
+    const annBadge = d.ann_badge || '<span class="badge-ann-neutral">无新公告</span>';
     return `<tr class="${{rowCls}}" data-code="${{d.code}}">
       <td>${{d.name}}</td>
       <td>${{d.code}}</td>
       <td class="num">${{d.position_pct.toFixed(2)}}%</td>
       <td class="num">${{formatChange(d.has_data ? d.change_pct : null)}}</td>
       <td class="num">${{formatContrib(d.has_data ? d.change_pct : null, d.position_pct)}}</td>
+      <td class="num">${{annBadge}}</td>
     </tr>`;
   }}).join('');
 
@@ -868,6 +912,43 @@ async function refreshAlerts() {{
   }}
   btn.disabled = false;
   btn.innerHTML = '<span id="alert-icon">🔔</span> 预警刷新';
+}}
+
+async function refreshAnnouncements() {{
+  const btn = document.getElementById('btn-ann');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span> 刷新中...';
+  showToast('📋 正在扫描公告情感...');
+
+  try {{
+    const resp = await fetch('/api/refresh_announcements');
+    const result = await resp.json();
+    if (result.data) {{
+      updateAnnouncements(result.data);
+      updateRefreshInfo();
+      showToast(`✅ 公告扫描完成：${{result.count}} 条`);
+    }}
+  }} catch (e) {{
+    showToast('❌ 刷新失败：' + e.message);
+  }}
+  btn.disabled = false;
+  btn.innerHTML = '<span id="ann-icon">📋</span> 公告刷新';
+}}
+
+function updateAnnouncements(annData) {{
+  // annData: {{code: {{tag, title}}, ...}}
+  document.querySelectorAll('#perf-table tr').forEach(row => {{
+    const code = row.dataset.code;
+    if (!code) return;
+    const ann = annData[code];
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 6) return;
+    if (ann) {{
+      cells[5].innerHTML = ann.badge_html;
+    }} else {{
+      cells[5].innerHTML = '<span class="badge-ann-neutral">无新公告</span>';
+    }}
+  }});
 }}
 
 async function pollAlertRefresh() {{
@@ -1381,7 +1462,7 @@ def fetch_announcements(code: str, name: str) -> list:
 
 
 # ============================================================================
-# 新增告警：24 小时新公告
+# 新增告警：24 小时新公告 + 情感分析（整合自 RL-alphapai）
 # ============================================================================
 
 ANNOUNCEMENT_KEYWORDS = {
@@ -1436,9 +1517,64 @@ ANNOUNCEMENT_CATEGORY = {
     "权益分派": "💰 分红",
 }
 
+# 公告情感关键词（整合自 RL-alphapai daily_announcement_monitor.py）
+ANNOUNCEMENT_POSITIVE = [
+    "业绩增长", "净利润", "营收增长", "超预期", "大幅增长", "突破", "创新高",
+    "中标", "大单", "订单", "签约", "战略合作", "扩产", "产能扩张",
+    "回购", "增持", "评级上调", "目标价", "首予", "买入", "推荐",
+    "全球首发", "填补空白", "量产", "商业化", "市场份额", "份额提升",
+]
+
+ANNOUNCEMENT_NEGATIVE = [
+    "业绩下降", "亏损", "净利润下降", "不及预期", "大幅下降", "首亏", "续亏",
+    "终止", "取消", "减持", "评级下调", "出售", "转让",
+    "诉讼", "仲裁", "处罚", "监管函", "警示函", "问询函", "立案调查",
+    "停产", "安全事故", "质量事故", "召回",
+]
+
+# 重大利好/利空关键词
+ANNOUNCEMENT_MAJOR_POSITIVE = ["全球首发", "填补空白", "创新高", "超预期"]
+ANNOUNCEMENT_MAJOR_NEGATIVE = ["处罚", "立案调查", "安全事故", "质量事故", "监管函"]
+
+
+def analyze_announcement_sentiment(title: str, content: str = "") -> tuple[str, str, str]:
+    """基于关键词分析公告情感
+
+    Returns:
+        (情感分类, 情感标签, 简短评论)
+        情感分类: "正面" / "负面" / "中性"
+        情感标签: "+++" / "++" / "+" / "=" / "-" / "--" / "---"
+    """
+    text = (title + " " + content)[:500]
+    for kw in ANNOUNCEMENT_NEGATIVE:
+        if kw in text:
+            if kw in ANNOUNCEMENT_MAJOR_NEGATIVE:
+                return "负面", "---", f"重大利空：{kw}"
+            return "负面", "--", f"负面：{kw}"
+    for kw in ANNOUNCEMENT_POSITIVE:
+        if kw in text:
+            if kw in ANNOUNCEMENT_MAJOR_POSITIVE:
+                return "正面", "+++", f"重大利好：{kw}"
+            return "正面", "++", f"正面：{kw}"
+    return "中性", "=", "常规公告"
+
+
+def get_announcement_badge(tag: str) -> str:
+    """获取情感标签对应的 HTML badge"""
+    badge_map = {
+        "+++": '<span class="badge-ann-major-pos">+++</span>',
+        "++": '<span class="badge-ann-pos">++</span>',
+        "+": '<span class="badge-ann-pos-light">+</span>',
+        "=": '<span class="badge-ann-neutral">=</span>',
+        "-": '<span class="badge-ann-neg-light">-</span>',
+        "--": '<span class="badge-ann-neg">--</span>',
+        "---": '<span class="badge-ann-major-neg">---</span>',
+    }
+    return badge_map.get(tag, f'<span class="badge-ann-neutral">{tag}</span>')
+
 
 def check_new_announcement(holding: dict, announcements: list) -> list[dict]:
-    """检查 24 小时内是否有新公告"""
+    """检查 24 小时内是否有新公告（含情感分析）"""
     alerts = []
     alerts_cfg = holding.get("alerts", {})
     code = holding["code"]
@@ -1459,10 +1595,12 @@ def check_new_announcement(holding: dict, announcements: list) -> list[dict]:
     if not recent:
         return alerts
 
-    # 分类整理
+    # 分类整理 + 情感分析
     categorized = {}
+    sentiment_list = []
     for ann in recent:
         title = str(ann.get("title", ""))
+        content = str(ann.get("content", ""))[:200]
         category = "📋 其他"
         for kw, cat in ANNOUNCEMENT_CATEGORY.items():
             if kw in title:
@@ -1471,6 +1609,15 @@ def check_new_announcement(holding: dict, announcements: list) -> list[dict]:
         if category not in categorized:
             categorized[category] = []
         categorized[category].append(title[:50])
+
+        # 情感分析
+        sentiment, tag, comment = analyze_announcement_sentiment(title, content)
+        sentiment_list.append({
+            "title": title[:60],
+            "sentiment": sentiment,
+            "tag": tag,
+            "comment": comment,
+        })
 
     # 按类别生成摘要
     summary_parts = []
@@ -1493,6 +1640,61 @@ def check_new_announcement(holding: dict, announcements: list) -> list[dict]:
         })
 
     return alerts
+
+
+# ============================================================================
+# 全量公告情感扫描（整合自 RL-alphapai daily_announcement_monitor.py）
+# ============================================================================
+
+def scan_all_announcements() -> list[dict]:
+    """扫描所有持仓股票的公告，返回情感分析结果
+
+    Returns:
+        [{"code", "name", "title", "date", "sentiment", "tag", "comment"}, ...]
+    """
+    try:
+        holdings = load_portfolio_config()
+    except FileNotFoundError:
+        return []
+
+    results = []
+    seen_codes = set()
+
+    def fetch_one(holding):
+        code = holding["code"]
+        name = holding["name"]
+        announcements = fetch_announcements(code, name)
+        out = []
+        for ann in announcements:
+            title = ann.get("title", "")
+            date = ann.get("date", "")
+            content = ann.get("content", "")[:200]
+            sentiment, tag, comment = analyze_announcement_sentiment(title, content)
+            key = (code, date, title[:20])
+            if key not in seen_codes:
+                seen_codes.add(key)
+                out.append({
+                    "code": code,
+                    "name": name,
+                    "title": title,
+                    "date": date,
+                    "content": content,
+                    "sentiment": sentiment,
+                    "tag": tag,
+                    "comment": comment,
+                })
+        return out
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(fetch_one, h) for h in holdings]
+        for future in as_completed(futures):
+            try:
+                results.extend(future.result())
+            except Exception:
+                pass
+
+    results.sort(key=lambda x: x.get("date", ""), reverse=True)
+    return results
 
 
 # ============================================================================

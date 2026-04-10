@@ -101,9 +101,12 @@ python3 ~/.claude/skills/RL-portfolio-monitor/portfolio_monitor.py --serve
 python3 ~/.claude/skills/RL-portfolio-monitor/portfolio_monitor.py --serve --port 9000
 ```
 
-页面上有两个按钮：
+页面上有三个按钮：
 - **📈 股价刷新**：仅刷新涨跌幅数据（快，3-5 分钟）
 - **🔔 预警刷新**：全量扫描所有告警类型（慢，10-15 分钟）
+- **📋 公告刷新**：扫描所有持仓近48h公告并做情感分析（中，5-8 分钟）
+
+交互页面表格新增"最新公告"列，显示情感标签 badge（+++ / ++ / = / -- / ---），点击按钮可独立刷新。
 
 ### 定时任务
 
