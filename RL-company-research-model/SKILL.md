@@ -1,5 +1,5 @@
 ---
-name: RL-company-research-model-V2.3
+name: RL-company-research-model-V2.4
 description: 自动化A股/港股公司研究建模工具。当用户输入一个上市公司名称，自动完成：(1)扫描 Research 文件夹的财报/纪要等研究材料；(2)通过 iFind 获取历史财务数据与一致预期；(3)按照 CATL 模板格式建立完整财务模型（三张表+业务拆分+模型假设），预测至2030年；(4)添加季度三张表及未来4季度 I/S 预测；(5)基本面研究打分sheet（行业/竞争力/Momentum/财务质量）；(6)估值sheet（PE/PEGY）。当用户说"帮我研究[公司名] level 2"、"研究[公司] level 2"、"帮我建[公司名]的模型"、"对[公司]做基本面研究"、"给[公司]建财务模型"、"研究一下[股票代码/公司]"时必须触发此skill。"level 2"是此skill的专属触发关键词。
 ---
 
@@ -369,6 +369,8 @@ PEGY法               XXX元      XXX元     +XX%
 - 综合质量评分
 - 估值结论
 
+**⚠️ 摘要页预测年份必须写跨 Sheet 公式**：历史年从 HIST_DATA 写入数值，预测年（2026E-2030E）必须写 Excel 公式引用利润表/现金流量表。所有衍生指标（毛利率、净利率、ROE、自由现金流）公式必须带显式 Sheet 名前缀（如 `利润表!I7`），否则会产生 `#VALUE!` 错误。详见"摘要 Sheet 构建代码"章节。
+
 ### 6.2 质量检查
 - 用 `scripts/recalc.py` 重新计算所有公式
 - 检查三张表是否有 #REF!, #DIV/0! 等错误
@@ -398,7 +400,7 @@ PEGY法               XXX元      XXX元     +XX%
 12. 添加季度 I/S 预测
 13. 创建基本面研究打分 Sheet
 14. 创建估值分析 Sheet
-15. 更新摘要 Sheet
+15. 更新摘要 Sheet（**注意**：历史年写数值，预测年写跨Sheet公式，衍生指标必须带Sheet前缀）
 16. 公式重算 & 质量检查
 17. 保存并提交用户
 
@@ -687,6 +689,91 @@ for yr in PRED_YEARS:
     ws_cf.cell(CF_ROW['end_cash'], col).value = \
         f'={dc(yr)}{CF_ROW["beg_cash"]}+{dc(yr)}{CF_ROW["net_chg"]}'
 ```
+
+---
+
+### 摘要 Sheet 构建代码（新建 Sheet 时执行）
+
+**⚠️ 关键：摘要页的预测年份列必须写跨 Sheet 公式，禁止只从 HIST_DATA 读取数值。所有衍生指标公式必须带显式 Sheet 名前缀。**
+
+```python
+def build_summary_sheet(wb, HIST_DATA, company_info, ALL_YEARS, HIST_YEARS, PRED_YEARS, YEAR_COL):
+    """
+    摘要 Sheet：公司概况 + 关键财务指标汇总
+    历史年：从 HIST_DATA 写入数值
+    预测年：写跨 Sheet 公式引用利润表/现金流量表（带显式 Sheet 前缀）
+    """
+    from openpyxl.styles import Font, Alignment, PatternFill
+    from openpyxl.utils import get_column_letter as gcl
+
+    ws_sum = wb['摘要']
+    dc = lambda yr: gcl(YEAR_COL[yr])
+    prev = lambda yr: ALL_YEARS[ALL_YEARS.index(yr) - 1]
+
+    # 指标行定义
+    SUMMARY_KEYS = [
+        ('revenue', '营业收入(亿元)', '#,##0.0'),
+        ('yoy', '营收增速', '0.0%'),
+        ('np_attr', '归母净利润(亿元)', '#,##0.0'),
+        ('gp', '毛利润(亿元)', '#,##0.0'),
+        ('gross_margin', '毛利率', '0.0%'),
+        ('np_margin', '净利率', '0.0%'),
+        ('roe', 'ROE', '0.0%'),
+        ('eps', 'EPS(元)', '0.00'),
+        ('oper_cf', '经营现金流(亿元)', '#,##0.0'),
+        ('fcf', '自由现金流(亿元)', '#,##0.0'),
+    ]
+
+    # 年份标题行
+    for i, yr in enumerate(ALL_YEARS):
+        ws_sum.cell(3, i + 2, yr)
+
+    # 标签 + 数据
+    for r, (key, label, fmt) in enumerate(SUMMARY_KEYS, start=4):
+        ws_sum.cell(r, 1, label)
+        for yr in ALL_YEARS:
+            col = YEAR_COL[yr]
+            if yr in HIST_YEARS:
+                # 历史年：直接写入数值
+                val = HIST_DATA.get(yr, {}).get(key)
+                if val is not None:
+                    c = ws_sum.cell(r, col, val)
+                    c.number_format = fmt
+            else:
+                # 预测年：写跨 Sheet 公式（带显式 Sheet 前缀）
+                if key == 'yoy':
+                    p = prev(yr)
+                    ws_sum.cell(r, col).value = \
+                        f'=(利润表!{dc(yr)}{IS_ROW["revenue"]}-利润表!{dc(p)}{IS_ROW["revenue"]})/利润表!{dc(p)}{IS_ROW["revenue"]}'
+                elif key == 'oper_cf':
+                    ws_sum.cell(r, col).value = f'=现金流量表!{dc(yr)}{CF_ROW["oper"]}'
+                elif key == 'fcf':
+                    ws_sum.cell(r, col).value = \
+                        f'=现金流量表!{dc(yr)}{CF_ROW["oper"]}+现金流量表!{dc(yr)}{CF_ROW["capex"]}'
+                elif key == 'gross_margin':
+                    ws_sum.cell(r, col).value = \
+                        f'=利润表!{dc(yr)}{IS_ROW["gp"]}/利润表!{dc(yr)}{IS_ROW["revenue"]}'
+                elif key == 'np_margin':
+                    ws_sum.cell(r, col).value = \
+                        f'=利润表!{dc(yr)}{IS_ROW["np_attr"]}/利润表!{dc(yr)}{IS_ROW["revenue"]}'
+                elif key == 'roe':
+                    ws_sum.cell(r, col).value = \
+                        f'=利润表!{dc(yr)}{IS_ROW["np_attr"]}/资产负债表!{dc(yr)}{BS_ROW["parent_eq"]}'
+                else:
+                    # 其他指标：引用利润表对应行
+                    sheet_name = '利润表'
+                    row_num = {'revenue': IS_ROW['revenue'], 'np_attr': IS_ROW['np_attr'],
+                               'gp': IS_ROW['gp'], 'eps': IS_ROW['eps']}.get(key)
+                    if row_num:
+                        ws_sum.cell(r, col).value = f'={sheet_name}!{dc(yr)}{row_num}'
+```
+
+**常见 Bug 记录**：
+| Bug | 症状 | 修复 |
+|-----|------|------|
+| 预测年数据为空 | 摘要页 2026E-2030E 无数据 | 历史年写数值，预测年必须写跨 Sheet 公式 |
+| `#VALUE!` 错误 | ROE/毛利率等衍生指标报错 | 公式必须带显式 Sheet 前缀：`利润表!B7` 而非 `B7` |
+| `#DIV/0!` 错误 | 某分母为0或空 | 检查引用的利润表/资产负债表对应单元格是否有值 |
 
 ---
 
