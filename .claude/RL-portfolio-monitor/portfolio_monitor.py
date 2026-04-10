@@ -59,16 +59,16 @@ def generate_html_report(
         if has_data:
             contribution = (d["position_pct"] / 100) * change
             total_contribution += contribution
-            if change <= -5:
+            if change >= 5:
                 badge = f'<span class="badge-red">{change:+.2f}%</span>'
                 row_class = "row-red"
-            elif change <= -3:
+            elif change >= 3:
                 badge = f'<span class="badge-red-light">{change:+.2f}%</span>'
                 row_class = "row-red-light"
-            elif change >= 5:
+            elif change <= -5:
                 badge = f'<span class="badge-green">{change:+.2f}%</span>'
                 row_class = "row-green"
-            elif change >= 3:
+            elif change <= -3:
                 badge = f'<span class="badge-green-light">{change:+.2f}%</span>'
                 row_class = "row-green-light"
             else:
@@ -159,10 +159,10 @@ def generate_html_report(
     --text: #e0e3eb;
     --text-muted: #8b8fa3;
     --accent: #3b82f6;
-    --red: #ef4444;
-    --red-light: #f87171;
-    --green: #22c55e;
-    --green-light: #86efac;
+    --red: #22c55e;
+    --red-light: #86efac;
+    --green: #ef4444;
+    --green-light: #f87171;
     --yellow: #eab308;
     --yellow-light: #fde047;
     --blue: #6366f1;
@@ -179,8 +179,8 @@ def generate_html_report(
   .kpi .value {{ font-size: 1.5rem; font-weight: 700; font-family: var(--mono); }}
   .kpi .value.red {{ color: var(--red); }}
   .kpi .value.green {{ color: var(--green); }}
-  .kpi .value.up {{ color: var(--green-light); }}
-  .kpi .value.down {{ color: var(--red-light); }}
+  .kpi .value.up {{ color: var(--red-light); }}
+  .kpi .value.down {{ color: var(--green-light); }}
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }}
   .card h2 {{ font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; font-weight: 600; }}
   table {{ width: 100%; border-collapse: collapse; font-size: 0.875rem; }}
@@ -241,13 +241,13 @@ def generate_html_report(
   </div>
   <div class="kpi">
     <div class="label">组合贡献</div>
-    <div class="value {'green' if total_contribution >= 0 else 'red'}">{total_contribution:+.3f}%</div>
+    <div class="value {'red' if total_contribution >= 0 else 'green'}">{total_contribution:+.3f}%</div>
   </div>
 </div>
 
 <div class="card">
   <h2>持仓明细（按涨跌幅排序）</h2>
-  <div class="contrib-total">组合今日估算涨跌幅：<span style="color:{'var(--green)' if total_contribution>=0 else 'var(--red)'}">{total_contribution:+.3f}%</span></div>
+  <div class="contrib-total">组合今日估算涨跌幅：<span style="color:{'var(--red)' if total_contribution>=0 else 'var(--green)'}">{total_contribution:+.3f}%</span></div>
   <table>
     <thead>
       <tr>
@@ -327,16 +327,16 @@ def generate_interactive_html(
         if has_data:
             contribution = (d["position_pct"] / 100) * change
             total_contribution += contribution
-            if change <= -5:
+            if change >= 5:
                 badge = f'<span class="badge-red">{change:+.2f}%</span>'
                 row_class = "row-red"
-            elif change <= -3:
+            elif change >= 3:
                 badge = f'<span class="badge-red-light">{change:+.2f}%</span>'
                 row_class = "row-red-light"
-            elif change >= 5:
+            elif change <= -5:
                 badge = f'<span class="badge-green">{change:+.2f}%</span>'
                 row_class = "row-green"
-            elif change >= 3:
+            elif change <= -3:
                 badge = f'<span class="badge-green-light">{change:+.2f}%</span>'
                 row_class = "row-green-light"
             else:
@@ -425,10 +425,10 @@ def generate_interactive_html(
     --text: #e0e3eb;
     --text-muted: #8b8fa3;
     --accent: #3b82f6;
-    --red: #ef4444;
-    --red-light: #f87171;
-    --green: #22c55e;
-    --green-light: #86efac;
+    --red: #22c55e;
+    --red-light: #86efac;
+    --green: #ef4444;
+    --green-light: #f87171;
     --yellow: #eab308;
     --yellow-light: #fde047;
     --blue: #6366f1;
@@ -445,8 +445,8 @@ def generate_interactive_html(
   .kpi .value {{ font-size: 1.5rem; font-weight: 700; font-family: var(--mono); }}
   .kpi .value.red {{ color: var(--red); }}
   .kpi .value.green {{ color: var(--green); }}
-  .kpi .value.up {{ color: var(--green-light); }}
-  .kpi .value.down {{ color: var(--red-light); }}
+  .kpi .value.up {{ color: var(--red-light); }}
+  .kpi .value.down {{ color: var(--green-light); }}
   .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }}
   .card h2 {{ font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; font-weight: 600; }}
   table {{ width: 100%; border-collapse: collapse; font-size: 0.875rem; }}
@@ -551,7 +551,7 @@ def generate_interactive_html(
   </div>
   <div class="kpi">
     <div class="label">组合贡献</div>
-    <div class="value {'green' if total_contribution >= 0 else 'red'}">{total_contribution:+.3f}%</div>
+    <div class="value {'red' if total_contribution >= 0 else 'green'}">{total_contribution:+.3f}%</div>
   </div>
 </div>
 
@@ -716,10 +716,10 @@ function formatChange(pct) {{
   if (pct === null || pct === undefined) return '<span class="badge-na">N/A</span>';
   const v = parseFloat(pct);
   let cls = 'badge-neutral';
-  if (v <= -5) cls = 'badge-red';
-  else if (v <= -3) cls = 'badge-red-light';
-  else if (v >= 5) cls = 'badge-green';
-  else if (v >= 3) cls = 'badge-green-light';
+  if (v <= -5) cls = 'badge-green';
+  else if (v <= -3) cls = 'badge-green-light';
+  else if (v >= 5) cls = 'badge-red';
+  else if (v >= 3) cls = 'badge-red-light';
   return `<span class="${{cls}}">${{v >= 0 ? '+' : ''}}${{v.toFixed(2)}}%</span>`;
 }}
 
@@ -747,7 +747,7 @@ function updateKPIs(data) {{
     kpis[4].textContent = alertCount;
     const tc = document.getElementById('total-contrib');
     tc.textContent = (totalContrib >= 0 ? '+' : '') + totalContrib.toFixed(3) + '%';
-    tc.style.color = totalContrib >= 0 ? 'var(--green)' : 'var(--red)';
+    tc.style.color = totalContrib >= 0 ? 'var(--red)' : 'var(--green)';
     if (alertCount > 0) {{
       kpis[4].classList.add('red');
     }}
@@ -780,8 +780,8 @@ function updatePerfTable(data) {{
   const tbody = document.getElementById('perf-table');
   tbody.innerHTML = data.map(d => {{
     const rowCls = d.has_data
-      ? (d.change_pct <= -5 ? 'row-red' : d.change_pct <= -3 ? 'row-red-light' :
-         d.change_pct >= 5 ? 'row-green' : d.change_pct >= 3 ? 'row-green-light' : '')
+      ? (d.change_pct >= 5 ? 'row-red' : d.change_pct >= 3 ? 'row-red-light' :
+         d.change_pct <= -5 ? 'row-green' : d.change_pct <= -3 ? 'row-green-light' : '')
       : 'row-na';
     return `<tr class="${{rowCls}}" data-code="${{d.code}}">
       <td>${{d.name}}</td>
@@ -1153,20 +1153,18 @@ def check_large_shareholder_reduce(holding: dict, shareholder_data: dict) -> lis
 # ============================================================================
 
 def fetch_performance(code: str) -> dict:
-    """获取股票行情数据（解析文本表格格式）"""
+    """获取股票行情数据（通过近3日收盘价计算涨跌幅）"""
     result = call_ifind_api(
         "stock",
         "get_stock_performance",
-        f"{code} 今日涨跌幅、最新价"
+        f"{code} 近3日收盘价"
     )
     try:
         inner = json.loads(result.get("data", {}).get("result", {}).get("content", [{}])[0].get("text", "{}"))
         table_text = inner.get("data", {}).get("answer", "")
         all_rows = table_text.strip().split("\n")
 
-        # 第一步：解析表头，找到 涨跌幅 和 收盘价 的列索引
-        header_idx = None
-        change_idx = None
+        # 第一步：解析表头，找到 收盘价 的列索引
         price_idx = None
         data_start = 0
         for i, r in enumerate(all_rows):
@@ -1175,16 +1173,13 @@ def fetch_performance(code: str) -> dict:
                 continue
             if r.startswith("|证券代码"):
                 cells = [c.strip() for c in r.split("|")]
-                header_idx = cells
                 for j, col in enumerate(cells):
-                    if "涨跌幅" in col:
-                        change_idx = j
                     if "收盘价" in col:
                         price_idx = j
                 data_start = i + 1
                 break
 
-        if change_idx is None or price_idx is None:
+        if price_idx is None:
             return {}
 
         # 第二步：提取数据行（排除分隔线和注释）
@@ -1198,26 +1193,24 @@ def fetch_performance(code: str) -> dict:
             cells = [c.strip() for c in r.split("|")]
             if all(c in ("", "---") for c in cells):
                 continue
-            if r.startswith("|") and len(cells) > max(change_idx, price_idx):
+            if r.startswith("|") and len(cells) > price_idx:
                 data_rows.append(cells)
 
-        if not data_rows:
+        if len(data_rows) < 2:
             return {}
 
-        # 取第一行（最新交易日）
-        parts = data_rows[0]
+        # 取前两行：最新价和昨日收盘价（API 按倒序返回）
         try:
-            change_str = parts[change_idx]
-            price_str = parts[price_idx]
-            if not change_str or not price_str:
+            today_price = float(data_rows[0][price_idx])
+            yesterday_price = float(data_rows[1][price_idx])
+            if today_price <= 0 or yesterday_price <= 0:
                 return {}
-            price = float(price_str)
-            change_pct = float(change_str)
+            change_pct = (today_price - yesterday_price) / yesterday_price * 100
         except (ValueError, IndexError):
             return {}
         return {
-            "price": price,
-            "change_pct": change_pct,
+            "price": today_price,
+            "change_pct": round(change_pct, 4),
             "volume_ratio": 0,
         }
     except Exception:
@@ -1659,7 +1652,7 @@ def run_scan(specific_code: Optional[str] = None, push: bool = True) -> list[dic
             else:
                 contribution = 0.0
             change = d["change_pct"]
-            flag = " 🔴" if change <= -3 else (" 🟢" if change >= 3 else "")
+            flag = " 🟢" if change <= -3 else (" 🔴" if change >= 3 else "")
             rows.append({
                 "name": d["name"],
                 "code": d["code"],
