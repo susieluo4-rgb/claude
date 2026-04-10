@@ -108,6 +108,16 @@ python3 ~/.claude/skills/RL-portfolio-monitor/portfolio_monitor.py --serve --por
 
 交互页面表格新增"最新公告"列，显示情感标签 badge（+++ / ++ / = / -- / ---），点击按钮可独立刷新。
 
+### 本地公告保存
+
+扫描公告时自动保存到 基本面 vault 对应公司文件夹：
+```
+~/Research/Vault_公司基本面Agent/11_公司列表/{首字母}/{公司名}_{代码}/公告/
+  公告_YYYYMMDD.md   ← 每日一个文件，包含当日所有公告 + 情感标签
+```
+
+文件格式为 Obsidian markdown，包含标题、情感分类、摘要，可直接在 Obsidian 中查阅。
+
 ### 定时任务
 
 **每小时轮询**（交易时段 9:30-15:00）：

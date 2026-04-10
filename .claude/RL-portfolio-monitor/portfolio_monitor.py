@@ -1694,7 +1694,83 @@ def scan_all_announcements() -> list[dict]:
                 pass
 
     results.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+    # 保存到本地 vault（按公司分组）
+    by_company = {}
+    for r in results:
+        code = r["code"]
+        if code not in by_company:
+            by_company[code] = {"name": r["name"], "announcements": []}
+        by_company[code]["announcements"].append(r)
+
+    for code, info in by_company.items():
+        save_announcements_to_vault(code, info["name"], info["announcements"])
+
     return results
+
+
+def save_announcements_to_vault(code: str, name: str, announcements: list):
+    """将公告保存到 基本面-公司列表 对应文件夹
+
+    路径: ~/Research/Vault_公司基本面Agent/11_公司列表/{首字母}/{name}_{code}/公告/
+    """
+    if not announcements:
+        return
+
+    # 获取首字母
+    first_char = name[0].upper()
+    if not first_char.isalpha():
+        first_char = "#"
+
+    company_dir = os.path.expanduser(
+        f"~/Research/Vault_公司基本面Agent/11_公司列表/{first_char}/{name}_{code}/公告"
+    )
+    os.makedirs(company_dir, exist_ok=True)
+
+    # 按日期分组，每天一个文件
+    by_date = {}
+    for ann in announcements:
+        date = ann.get("date", "")[:10] or "未知日期"
+        if date not in by_date:
+            by_date[date] = []
+        by_date[date].append(ann)
+
+    for date, anns in by_date.items():
+        safe_date = date.replace("-", "")
+        filename = f"{company_dir}/公告_{safe_date}.md"
+
+        lines = [
+            f"# {name}（{code}）公告汇总",
+            f"",
+            f"> 日期：{date}",
+            f"> 扫描时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            f"> 数据来源：同花顺 iFinD search_notice",
+            f"",
+            f"---",
+            f"",
+            f"共 {len(anns)} 条公告",
+            f"",
+        ]
+
+        for ann in anns:
+            title = ann.get("title", "无标题")
+            content = ann.get("content", "")
+            sentiment = ann.get("sentiment", "中性")
+            tag = ann.get("tag", "=")
+            comment = ann.get("comment", "")
+
+            lines.append(f"## [{tag}] {title}")
+            lines.append(f"")
+            lines.append(f"- **情感**：{sentiment}（{comment}）")
+            lines.append(f"- **日期**：{ann.get('date', '')}")
+            if content:
+                lines.append(f"- **摘要**：{content}")
+            lines.append(f"")
+            lines.append(f"---")
+            lines.append(f"")
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
 
 
 # ============================================================================
