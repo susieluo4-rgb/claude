@@ -1,5 +1,5 @@
 ---
-name: RL-alphapai
+name: rl-alphapai
 description: RL投研包 — 基于Alpha派API，专门针对RL自选股（63只，实际全量187只）提供一键投研问答、纪要检索、业绩点评、公告情绪监控等批量分析能力。当用户提到RL自选股、RL分组、我的自选股查询、批量检索RL股票、公告监控、公告情绪、RL监控、或要求对自选股进行投研分析时使用本skill。
 metadata:
     version: 1.1
@@ -122,7 +122,7 @@ python ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mod
 扫描全部自选股（当前 187 只）的近7天公告，AI 判断情感并附简短评论。
 
 ```bash
-python ~/.claude/skills/RL-alphapai/scripts/daily_announcement_monitor.py
+python ~/.claude/skills/rl-alphapai/scripts/daily_announcement_monitor.py
 ```
 
 **注意**：ifind `search_notice` 的 `time_start`/`time_end` 过滤对公告数据可靠性有限，结果中可能夹杂少量近期旧公告（1周内）。时间越近过滤越松，建议实际盯盘时结合 `get_stock_events` 补充验证。
@@ -137,7 +137,7 @@ python ~/.claude/skills/RL-alphapai/scripts/daily_announcement_monitor.py
 **定时任务（可选）**：
 ```bash
 # 每天早上 8:30 自动跑，发到飞书
-/loop 30 8 * * 1-5 python3 ~/.claude/skills/RL-alphapai/scripts/daily_announcement_monitor.py && openclaw agent --session-id "782328a8-8c4c-4be3-b18c-57ad4ad0ae89" --channel feishu --reply-to "ou_aae8836476a244334c897fb11b9efd1a" --deliver -m "$(cat ~/Documents/earnings-transcripts/公告监控/$(date +\%Y\%m\%d)_*.md)" --json
+/loop 30 8 * * 1-5 python3 ~/.claude/skills/rl-alphapai/scripts/daily_announcement_monitor.py && openclaw agent --session-id "782328a8-8c4c-4be3-b18c-57ad4ad0ae89" --channel feishu --reply-to "ou_aae8836476a244334c897fb11b9efd1a" --deliver -m "$(cat ~/Documents/earnings-transcripts/公告监控/$(date +\%Y\%m\%d)_*.md)" --json
 ```
 
 **情感标签含义**：

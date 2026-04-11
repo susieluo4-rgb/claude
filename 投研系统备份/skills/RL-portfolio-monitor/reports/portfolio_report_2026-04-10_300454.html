@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>持仓监控日报 2026-04-10</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e0e3eb;
+    --text-muted: #8b8fa3;
+    --accent: #3b82f6;
+    --red: #ef4444;
+    --red-light: #f87171;
+    --green: #22c55e;
+    --green-light: #86efac;
+    --yellow: #eab308;
+    --yellow-light: #fde047;
+    --blue: #6366f1;
+    --mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; line-height: 1.5; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; }
+  .kpi-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 24px; min-width: 140px; }
+  .kpi .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .kpi .value { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); }
+  .kpi .value.red { color: var(--red); }
+  .kpi .value.green { color: var(--green); }
+  .kpi .value.up { color: var(--green-light); }
+  .kpi .value.down { color: var(--red-light); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .num { font-family: var(--mono); text-align: right; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-red-light { background: rgba(239,68,68,0.08); color: #fca5a5; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-green { background: rgba(34,197,94,0.15); color: #86efac; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-green-light { background: rgba(34,197,94,0.08); color: #bbf7d0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: #fde047; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-blue { background: rgba(99,102,241,0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-neutral { background: rgba(139,143,163,0.15); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .row-red { background: rgba(239,68,68,0.04); }
+  .row-green { background: rgba(34,197,94,0.04); }
+  .row-red-light { background: rgba(239,68,68,0.02); }
+  .row-green-light { background: rgba(34,197,94,0.02); }
+  .no-alerts { color: var(--text-muted); text-align: center; padding: 24px; }
+  .footer { text-align: center; color: var(--text-muted); font-size: 0.75rem; margin-top: 24px; }
+  .contrib-total { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; padding: 12px 16px; background: rgba(59,130,246,0.1); border-radius: 8px; margin-bottom: 16px; display: inline-block; }
+  @media (max-width: 700px) { table { font-size: 0.8rem; } th, td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📊 持仓监控日报</h1>
+<p class="subtitle">2026-04-10 · 数据截至 09:30:57</p>
+
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="label">持仓数量</div>
+    <div class="value">1</div>
+  </div>
+  <div class="kpi">
+    <div class="label">上涨</div>
+    <div class="value up">▲ 0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">下跌</div>
+    <div class="value down">▼ 0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">平盘</div>
+    <div class="value">1</div>
+  </div>
+  <div class="kpi">
+    <div class="label">触发告警</div>
+    <div class="value ">0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">组合贡献</div>
+    <div class="value green">+0.000%</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>持仓明细（按涨跌幅排序）</h2>
+  <div class="contrib-total">组合今日估算涨跌幅：<span style="color:var(--green)">+0.000%</span></div>
+  <table>
+    <thead>
+      <tr>
+        <th>公司名称</th>
+        <th>代码</th>
+        <th class="num">持仓占比</th>
+        <th class="num">今日涨跌幅</th>
+        <th class="num">组合贡献</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class=""><td>深信服</td><td>300454.SZ</td><td class="num">6.20%</td><td class="num"><span class="badge-neutral">N/A</span></td><td class="num">N/A</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>触发告警</h2>
+  <div class="no-alerts">✅ 今日无告警</div>
+</div>
+
+<div class="footer">
+  由 RL-Portfolio-Monitor 生成 · 2026-04-10 09:30:57 · 数据来源：同花顺 iFinD
+</div>
+</div>
+</body>
+</html>

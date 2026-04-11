@@ -1,14 +1,14 @@
 ---
-name: RL-radar-agent
+name: rl-radar-agent
 description: 投研系统雷达Agent — 多数据源信息收集层。当用户说"投研 [公司]"、研究 [公司]、分析 [公司]、雷达 [公司]、或启动投研任务时，Lead Agent会先调用本Agent预先收集目标公司的外部数据（财报/研报/纪要/宏观/行业），为后续Agent提供数据支撑。本Agent为被动响应模式，随投研任务启动。
 metadata:
-    version: 1.1
+    version: 1.6
     type: data-collection-agent
     position: 前置数据收集层
-    data_sources: alphapai-research, iFind, rabyte, 本地文件, 港交所披露
+    data_sources: alphapai-research, iFind, rabyte, 本地文件, 港交所披露, portfolio-monitor
 ---
 
-# RL-Radar-Agent — 投研系统雷达Agent
+# rl-radar-agent — 投研系统雷达Agent
 
 ## 角色定位
 
@@ -115,6 +115,13 @@ Lead Agent 调用 雷达Agent（被动响应）
   → qa --question "{公司}近期有什么重大消息？"
   → report --code {代码}：最新公告列表
 
+优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
+  → 财务数据、行情估值、公司信息、宏观数据：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type data --query "{公司} {指标}"
+  → 新闻、公告、舆情：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type news --query "{公司} 最新公告"
+  → ⚠️ 注意：每日有次数上限；免费用户仅支持3年内数据；不支持 ESG/风险指标
+
 优先级 4：iFind新闻
   → search_news：最新新闻舆情
 
@@ -139,6 +146,11 @@ Lead Agent 调用 雷达Agent（被动响应）
   → agent --mode 2：公司一页纸（快速概览）
   → recall --type roadShow,report,comment：路演纪要+研报+点评
   → qa --question "{公司}近期有什么重大消息？"
+
+优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
+  → 财务数据、行情估值：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type data --query "{股票代码} {指标}"
+  → ⚠️ 港股用股票代码格式（如 0700.HK）；每日有次数上限
 
 优先级 4：港交所披露（补充）
   → https://www.hkexnews.hk/ 搜索最新年报/中报PDF
@@ -318,6 +330,25 @@ Vault_公司基本面Agent/S-Z/中芯国际_688981/
 ├── 季报/
 └── alphapai/
 ```
+
+### Step 6（新增）：Wiki 预更新（可选）
+
+**当雷达扫描发现重大变化时**（如财报发布、股价异动、重大公告），检查并更新对应公司的 Wiki 页面：
+
+```
+触发条件：
+- 发现最新年报/季报已发布（与 last_sync.json 对比）
+- 股价近5日涨跌幅超过 ±10%
+- 有重大公告（如业绩预告、并购重组、高管变动）
+
+执行步骤：
+1. 检查 wiki/companies/{首字母}/{公司}_{代码}.md 是否存在
+2. 如存在：增量更新"估值水平"和"风险因素" Section
+3. 如不存在：跳过，等待 rl-wiki-ingest 首次编译
+4. 追加记录到 wiki/log.md
+```
+
+**⚠️ 此步为可选步骤**，不影响雷达数据收集的主流程。当时间紧迫或 API 限流时，可跳过此步。
 
 ## AlphaPai 调用规范
 
@@ -506,13 +537,14 @@ get_stock_performance({
 
 | 错误类型 | 处理方式 |
 |---------|---------|
-| iFind Token失效 | 切换到AlphaPai作为主要数据源 |
+| iFind MCP + 备用脚本均限流/失效 | 切换到东方财富妙想（mx_api.py） |
+| 妙想 API 也限流（每日上限） | 切换到 AlphaPai 作为主要数据源 |
 | iFind港股财务数据为空 | 降级到港交所披露 + AlphaPai |
-| AlphaPai API Key缺失 | 降级到iFind + 本地文件 |
+| AlphaPai API Key缺失 | 降级到iFind/妙想 + 本地文件 |
 | 本地文件不存在 | 跳过，继续其他数据源 |
 | 港交所披露下载失败 | 标记缺失，记录需要补全，继续后续 |
 | 网络超时 | 重试1次，失败则记录"⚠️ 获取失败"继续后续 |
-| 两者均无数据 | 输出空白报告，标注"⚠️ 全量数据获取失败" |
+| 所有数据源均无数据 | 输出空白报告，标注"⚠️ 全量数据获取失败" |
 | 多数据源同一指标冲突 | 在报告中标记⚠️，列出来源及数值，不仲裁，留给基本面Agent判断 |
 
 ## 性能要求
@@ -541,8 +573,10 @@ get_stock_performance({
 6. **港股财务数据**：以港交所披露PDF为准，iFind财务数据可能为空
 7. **Step 1.5必须执行**：在收集任何数据前，必须先完成本地基本面文件夹核查
 8. **增量同步**：Step 2.5 读取 last_sync.json，缓存有效时跳过API调用；每次收集完成后必须更新 last_sync.json
+9. **⚠️ 财报PDF必须下载（v1.6新增，核心修复）**：API返回结构化财务数据 ≠ PDF已下载。**财报PDF下载是独立任务，与API数据获取并行执行，互不替代。** 即使iFind/妙想已返回完整的财务数据，仍必须完成Step 1.5的PDF完整性检查并下载缺失的年报/中报/季报。这是"数据源短路"问题的修复 — 此前雷达Agent在API返回数据后即认为任务完成，跳过了PDF下载步骤。
 
 ---
 
-*版本：v1.4 | 2026-04-09*
-*数据源：alphapai-research + iFind MCP + rabyte + 本地文件 + 港交所披露*
+*版本：v1.6 | 2026-04-11*
+*数据源：alphapai-research + iFind MCP + 东方财富妙想 + rabyte + 本地文件 + 港交所披露*
+*核心变更：v1.6 新增财报PDF强制下载规则，修复"数据源短路"问题*

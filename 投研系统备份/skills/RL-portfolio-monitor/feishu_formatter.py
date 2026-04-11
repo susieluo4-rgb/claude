@@ -9,6 +9,7 @@ ALERT_EMOJI = {
     "PRICE_RISE": "🟢",
     "VOLUME_SPIKE": "🟡",
     "NEGATIVE_NEWS": "🔴",
+    "NEW_ANNOUNCEMENT": "📋",
     "ESG_DOWNGRADE": "🔴",
     "ANALYST_DOWNGRADE": "🟡",
     "LARGE_SHAREHOLDER_REDUCE": "🟡",
@@ -19,6 +20,7 @@ ALERT_TYPE_NAME = {
     "PRICE_RISE": "价格上涨",
     "VOLUME_SPIKE": "成交量放大",
     "NEGATIVE_NEWS": "负面新闻",
+    "NEW_ANNOUNCEMENT": "新公告发布",
     "ESG_DOWNGRADE": "ESG 评级下调",
     "ANALYST_DOWNGRADE": "券商下调评级",
     "LARGE_SHAREHOLDER_REDUCE": "大股东减持",
@@ -32,6 +34,7 @@ def format_single_alert(
     trigger_value: float,
     threshold_value: float,
     headline: str = "",
+    ann_summary: str = "",
 ) -> str:
     """格式化单条告警为飞书消息"""
     emoji = ALERT_EMOJI.get(alert_type, "🔔")
@@ -45,6 +48,10 @@ def format_single_alert(
 
     if headline:
         msg += f"摘要：{headline}\n"
+
+    # 公告摘要（新公告类型独有）
+    if alert_type == "NEW_ANNOUNCEMENT" and ann_summary:
+        msg += f"\n📋 公告内容：\n{ann_summary}\n"
 
     msg += f"时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
     return msg

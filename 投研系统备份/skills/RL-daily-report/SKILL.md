@@ -1,5 +1,5 @@
 ---
-name: RL-daily-report
+name: rl-daily-report
 description: Daily Report - 每日日报
 ---
 
@@ -294,3 +294,16 @@ openclaw agent \
 
 - 定时任务：每天北京时间 07:00
 - 手动触发：说"生成日报"或"运行日报"
+
+## Step 13: Wiki 日志更新（新增）
+
+**日报生成完成后**，将当日的组合事件摘要追加到 Wiki 变更日志：
+
+```
+目标文件：~/Research/Vault_共享知识库/wiki/log.md
+追加内容格式：
+## YYYY-MM-DD
+- **润铭_组合日报** — {当日重大公告/业绩预告数量统计} | 触发者: rl-daily-report | 影响: 组合视图估值更新
+```
+
+**⚠️ 此步为可选步骤**，不影响日报的正常生成和发送。

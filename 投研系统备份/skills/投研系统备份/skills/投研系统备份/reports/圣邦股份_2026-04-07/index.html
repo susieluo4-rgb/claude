@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圣邦股份 (300661.SZ) — 投研报告 2026-04-07</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --sidebar: #1a1a2e;
+    --sidebar-hover: #16213e;
+    --accent: #4361ee;
+    --accent-light: #e8edff;
+    --text: #1a1a2e;
+    --text-muted: #6c757d;
+    --border: #dee2e6;
+    --card: #ffffff;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar { width: 240px; background: var(--sidebar); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+  .sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-header h1 { font-size: 15px; font-weight: 700; line-height: 1.4; }
+  .sidebar-header .subtitle { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .sidebar-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); padding: 16px 16px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; font-size: 13px; border-left: 3px solid transparent; transition: all 0.15s; color: rgba(255,255,255,0.7); }
+  .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+  .nav-item.active { background: rgba(67,97,238,0.2); border-left-color: var(--accent); color: #fff; }
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+  .nav-badge { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+  .badge-good { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .badge-warn { background: rgba(234,179,8,0.2); color: #facc15; }
+  .badge-bad { background: rgba(239,68,68,0.2); color: #f87171; }
+  .badge-neutral { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+
+  /* Main content */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  #search { flex: 1; max-width: 400px; }
+  #search input { width: 100%; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; }
+  #search input:focus { border-color: var(--accent); }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3451d1; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--bg); }
+  #content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* KPI Cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+  .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 700; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .kpi-good .kpi-value { color: var(--green); }
+  .kpi-warn .kpi-value { color: var(--yellow); }
+  .kpi-bad .kpi-value { color: var(--red); }
+  .kpi-neutral .kpi-value { color: var(--accent); }
+
+  /* Sections */
+  .section { background: var(--card); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .section-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .section-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .section-body { padding: 20px; }
+  h2 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  h3 { font-size: 13px; font-weight: 600; margin: 16px 0 8px; color: var(--accent); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+  th { background: var(--bg); padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--accent-light); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .center { text-align: center; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: rgba(34,197,94,0.1); color: var(--green); }
+  .tag-yellow { background: rgba(234,179,8,0.1); color: var(--yellow); }
+  .tag-red { background: rgba(239,68,94,0.1); color: var(--red); }
+  .tag-blue { background: rgba(67,97,238,0.1); color: var(--accent); }
+
+  /* Timeline */
+  .timeline { border-left: 2px solid var(--border); padding-left: 20px; margin-left: 8px; }
+  .timeline-item { position: relative; margin-bottom: 16px; }
+  .timeline-item::before { content: ''; position: absolute; left: -25px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--card); }
+  .timeline-date { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .timeline-title { font-size: 13px; font-weight: 600; }
+  .timeline-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Highlight */
+  .highlight { background: linear-gradient(120deg, #fff9db 0%, #fff3cd 100%); border-left: 3px solid var(--yellow); padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
+  .highlight-green { background: linear-gradient(120deg, #f0fdf4 0%, #dcfce7 100%); border-left-color: var(--green); }
+  .highlight-red { background: linear-gradient(120deg, #fef2f2 0%, #fee2e2 100%); border-left-color: var(--red); }
+
+  /* Risk matrix */
+  .risk-grid { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 6px; }
+  .risk-header { font-size: 11px; font-weight: 700; text-align: center; padding: 6px; background: var(--bg); border-radius: 4px; }
+  .risk-cell { padding: 10px; border-radius: 6px; text-align: center; font-size: 12px; font-weight: 600; }
+  .risk-low { background: rgba(34,197,94,0.1); color: var(--green); }
+  .risk-med { background: rgba(234,179,8,0.1); color: var(--yellow); }
+  .risk-high { background: rgba(239,68,94,0.1); color: var(--red); }
+
+  /* Print */
+  @media print { body { display: block; } #sidebar { display: none; } #main { display: block; overflow: visible; } #content { overflow: visible; padding: 0; } .section { break-inside: avoid; } }
+
+  /* Markdown content styling */
+  .md-content h1 { font-size: 18px; border-bottom: 2px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; }
+  .md-content h2 { font-size: 15px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin: 20px 0 12px; }
+  .md-content h3 { font-size: 13px; color: var(--text); margin: 14px 0 8px; }
+  .md-content p { font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
+  .md-content ul, .md-content ol { margin: 8px 0 10px 20px; }
+  .md-content li { font-size: 13px; line-height: 1.8; margin-bottom: 4px; }
+  .md-content blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; background: var(--accent-light); border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
+  .md-content code { background: #f1f3f4; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .md-content table { font-size: 12px; }
+  .md-content th { font-size: 11px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-header">
+    <h1>圣邦股份<br>(300661.SZ)</h1>
+    <div class="subtitle">多Agent投研报告 · 2026-04-07</div>
+  </div>
+
+  <div class="sidebar-section">综合</div>
+  <div class="nav-item active" onclick="showPage('综合报告')">
+    <span class="nav-icon">📊</span> 综合报告 <span class="nav-badge badge-neutral">核心</span>
+  </div>
+
+  <div class="sidebar-section">分项Agent</div>
+  <div class="nav-item" onclick="showPage('宏观环境')">
+    <span class="nav-icon">🌍</span> 宏观环境 <span class="nav-badge badge-good">利好</span>
+  </div>
+  <div class="nav-item" onclick="showPage('行业分析')">
+    <span class="nav-icon">🏭</span> 行业分析 <span class="nav-badge badge-good">看好</span>
+  </div>
+  <div class="nav-item" onclick="showPage('数据校验')">
+    <span class="nav-icon">✅</span> 数据校验 <span class="nav-badge badge-good">A</span>
+  </div>
+  <div class="nav-item" onclick="showPage('基本面研究')">
+    <span class="nav-icon">📈</span> 基本面研究 <span class="nav-badge badge-neutral">6.7分</span>
+  </div>
+  <div class="nav-item" onclick="showPage('市场情绪')">
+    <span class="nav-icon">💬</span> 市场情绪 <span class="nav-badge badge-warn">谨慎</span>
+  </div>
+  <div class="nav-item" onclick="showPage('技术分析')">
+    <span class="nav-icon">📉</span> 技术分析 <span class="nav-badge badge-warn">偏弱</span>
+  </div>
+  <div class="nav-item" onclick="showPage('风险评估')">
+    <span class="nav-icon">⚠️</span> 风险评估 <span class="nav-badge badge-bad">中高</span>
+  </div>
+  <div class="nav-item" onclick="showPage('基金经理评估')">
+    <span class="nav-icon">🎯</span> 基金经理 <span class="nav-badge badge-neutral">中性</span>
+  </div>
+
+  <div class="sidebar-section" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+    <div class="nav-item" onclick="window.print()"><span class="nav-icon">🖨️</span> 打印报告</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topbar">
+    <div id="search">
+      <input type="text" placeholder="搜索关键词（MACD、存货、毛利率...）" oninput="highlightKeyword(this.value)">
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" onclick="window.print()">🖨️ 打印</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- ===== 综合报告 ===== -->
+    <div id="page-综合报告" class="page">
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-neutral">
+          <div class="kpi-label">综合评级</div>
+          <div class="kpi-value">中性</div>
+          <div class="kpi-sub">中性（Neutral）</div>
+        </div>
+        <div class="kpi-card kpi-neutral">
+          <div class="kpi-label">当前股价</div>
+          <div class="kpi-value">68.16</div>
+          <div class="kpi-sub">元 · 52周30%分位</div>
+        </div>
+        <div class="kpi-card kpi-good">
+          <div class="kpi-label">目标价区间</div>
+          <div class="kpi-value">75-88</div>
+          <div class="kpi-sub">潜在空间 +10%~+29%</div>
+        </div>
+        <div class="kpi-card kpi-neutral">
+          <div class="kpi-label">彬元质量评分</div>
+          <div class="kpi-value">6.70</div>
+          <div class="kpi-sub">A-级（满分10）</div>
+        </div>
+        <div class="kpi-card kpi-warn">
+          <div class="kpi-label">风险等级</div>
+          <div class="kpi-value">中高</div>
+          <div class="kpi-sub">Mod-High Risk</div>
+        </div>
+        <div class="kpi-card kpi-good">
+          <div class="kpi-label">2026E净利润</div>
+          <div class="kpi-value">+48%</div>
+          <div class="kpi-sub">一致预期 YoY</div>
+        </div>
+      </div>
+
+      <!-- Rating Banner -->
+      <div class="section">
+        <div class="section-body" style="text-align:center; padding: 24px;">
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">综合投资评级</div>
+          <div style="font-size:36px; font-weight:800; color:var(--accent); margin-bottom:8px;">中性（Neutral）</div>
+          <div style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">建议底仓配置，控制仓位1.5-3%，持有周期12-18个月</div>
+          <div style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap;">
+            <div style="text-align:center">
+              <div style="font-size:11px; color:var(--text-muted);">建仓区间</div>
+              <div style="font-size:20px; font-weight:700; color:var(--green);">65-68元</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px; color:var(--text-muted);">止损位</div>
+              <div style="font-size:20px; font-weight:700; color:var(--red);">65元</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px; color:var(--text-muted);">第一目标</div>
+              <div style="font-size:20px; font-weight:700; color:var(--accent);">73-75元</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px; color:var(--text-muted);">终极目标</div>
+              <div style="font-size:20px; font-weight:700; color:var(--accent);">88元</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score Breakdown -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📊 多维度评分</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>维度</th><th>分项评分</th><th>权重</th><th>加权得分</th><th>核心依据</th></tr>
+            <tr><td>A. 行业质量</td><td class="center"><span class="tag tag-green">8.0/10</span></td><td class="num">20%</td><td class="num">1.60</td><td>全球模拟芯片830亿美元，国产自给率20%→30%，汽车+AI双轮驱动</td></tr>
+            <tr><td>B. 竞争壁垒</td><td class="center"><span class="tag tag-yellow">6.0/10</span></td><td class="num">25%</td><td class="num">1.50</td><td>国内龙头（5000+料号），但TI规模领先25倍</td></tr>
+            <tr><td>C. 增长能见度</td><td class="center"><span class="tag tag-green">7.0/10</span></td><td class="num">20%</td><td class="num">1.40</td><td>2026E净利润+48%，信号链毛利率58%稳定</td></tr>
+            <tr><td>D. 财务质量</td><td class="center"><span class="tag tag-yellow">6.0/10</span></td><td class="num">25%</td><td class="num">1.50</td><td>ROE 11.2%恢复中；存货+263%为隐患</td></tr>
+            <tr><td>E. 公司治理</td><td class="center"><span class="tag tag-green">7.0/10</span></td><td class="num">10%</td><td class="num">0.70</td><td>创始人控股，研发人员71%，917项专利</td></tr>
+            <tr style="background:var(--accent-light);font-weight:700;"><td>★ 综合评分</td><td class="center"><span class="tag tag-blue">6.70/10</span></td><td class="num">100%</td><td class="num">6.70</td><td>A-级（良好）</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3 Core Risks -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">⚠️ 三大核心矛盾</span>
+          <span class="section-badge" style="background:rgba(239,68,68,0.1);color:var(--red);">风险警示</span>
+        </div>
+        <div class="section-body">
+          <div class="highlight highlight-red">
+            <strong>1. TI价格战风险（极高）</strong>：TI毛利率65% vs 圣邦48%，成本优势差距20pp+，历史上已造成净利润暴跌68%
+          </div>
+          <div class="highlight highlight-red">
+            <strong>2. 存货积压风险（高）</strong>：存货14.48亿（5年+263%），若需求不及预期，减值可侵蚀净利润40-60%
+          </div>
+          <div class="highlight highlight-red">
+            <strong>3. 高估值压力（高）</strong>：PE(TTM) 77x对应当年净利润增速仅9.4%，业绩不达预期将面临戴维斯双杀
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📐 情景分析</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>情景</th><th>概率</th><th>核心假设</th><th>目标价</th><th>涨跌幅</th></tr>
+            <tr><td><span class="tag tag-green">乐观</span></td><td class="num">30%</td><td>反倾销落地+毛利率修复至52%+信号链放量</td><td class="num"><strong>88元</strong></td><td class="num" style="color:var(--green);">+29%</td></tr>
+            <tr><td><span class="tag tag-yellow">中性</span></td><td class="num">50%</td><td>行业复苏延续+毛利率企稳48-50%</td><td class="num"><strong>75元</strong></td><td class="num" style="color:var(--green);">+10%</td></tr>
+            <tr><td><span class="tag tag-red">悲观</span></td><td class="num">20%</td><td>TI价格战重燃+存货减值5-8亿</td><td class="num"><strong>55元</strong></td><td class="num" style="color:var(--red);">-19%</td></tr>
+          </table>
+          <div class="highlight">
+            加权预期收益：30%×+29% + 50%×+10% + 20%×(-19%) = <strong>+9.9%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Catalysts -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🚀 催化剂时间轴</span>
+        </div>
+        <div class="section-body">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-date">2026年4月（短期）</div>
+              <div class="timeline-title">Q1财报披露 + 反倾销裁定</div>
+              <div class="timeline-desc">毛利率是否回升？存货绝对值是否环比下降？反倾销初裁结果？</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-date">2026年中报（中期）</div>
+              <div class="timeline-title">毛利率关键验证节点</div>
+              <div class="timeline-desc">能否回升至49%+？这是判断基本面改善的核心指标</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-date">2026H2（中期）</div>
+              <div class="timeline-title">汽车客户导入 + AI服务器订单</div>
+              <div class="timeline-desc">比亚迪/华为认证通过；进入英伟达/国产AI服务器供应链</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-date">2027-2028（长期）</div>
+              <div class="timeline-title">毛利率修复 + 海外拓展</div>
+              <div class="timeline-desc">毛利率回升至52%+；海外客户供应链突破</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Monitor -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🔔 核心监控指标</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>指标</th><th>预警阈值</th><th>对应操作</th></tr>
+            <tr><td>Q1营收增速</td><td><span class="tag tag-red">&lt;+10%</span></td><td>减仓或止损</td></tr>
+            <tr><td>单季毛利率</td><td><span class="tag tag-red">&lt;46%</span></td><td>减仓，提示价格战风险</td></tr>
+            <tr><td>存货绝对值</td><td><span class="tag tag-yellow">连续2季+5%</span></td><td>预警，关注减值风险</td></tr>
+            <tr><td>股价</td><td><span class="tag tag-red">跌破65元</span></td><td>止损（控制在-5%以内）</td></tr>
+            <tr><td>TI动态</td><td><span class="tag tag-red">TI宣布降价</span></td><td>立即评估影响，决定去留</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 宏观环境 ===== -->
+    <div id="page-宏观环境" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🌍 宏观环境分析</span>
+          <span class="section-badge" style="background:rgba(34,197,94,0.1);color:var(--green);">偏利好</span>
+        </div>
+        <div class="section-body md-content">
+          <h2>一、全球宏观环境</h2>
+          <p>美国2025年GDP同比+5.0%，受益于AI产业投资拉动和财政扩张。美联储自2025年下半年开启降息周期，截至2026年3月累计降息75bp至3.75%，宽松环境利好科技股估值。</p>
+          <h2>二、中国宏观环境</h2>
+          <p>2025年中国GDP增速4.68%，LPR降至3.00%，M2同比增长8.5%，流动性保持充裕。3月制造业PMI回升至50.4，制造业景气季节性修复。</p>
+          <h2>三、半导体行业政策</h2>
+          <p><strong>大基金三期规模超3400亿元</strong>，重点投向半导体设备、材料、模拟芯片。商务部2025年1月启动针对美国等国成熟制程芯片的反倾销调查，若最终实施将显著改善国产厂商竞争环境。</p>
+          <h2>四、对圣邦股份的影响</h2>
+          <div class="highlight highlight-green">
+            <strong>综合评估：偏利好</strong> — 货币宽松+大基金三期+反倾销调查三重政策红利叠加，国产替代需求显著增加，下游客户主动切换至国内供应商意愿强烈。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 行业分析 ===== -->
+    <div id="page-行业分析" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🏭 行业分析 — 模拟芯片</span>
+          <span class="section-badge" style="background:rgba(34,197,94,0.1);color:var(--green);">看好</span>
+        </div>
+        <div class="section-body md-content">
+          <h2>行业概览</h2>
+          <p>全球模拟芯片市场2025年规模约<strong>830亿美元</strong>，中国超<strong>3000亿元人民币</strong>，占全球约35-40%。产品分电源管理（55%）+信号链（45%）两大类。</p>
+          <h2>竞争格局</h2>
+          <p>全球高度集中（TI 23%、ADI 11%），国内分散（圣邦、思瑞浦、纳芯微等）。国产自给率约20%，目标2030年达30%+，约300亿元增量市场。</p>
+          <h2>周期判断</h2>
+          <div class="highlight">当前处于<strong>复苏中段</strong>：去库存已完成（2023年），量增价稳，2025年圣邦营收+16.5%验证复苏趋势。</div>
+          <h2>投资结论</h2>
+          <p>模拟芯片是半导体中周期属性最弱、护城河最高的细分赛道，国产替代主线清晰，<strong>行业评级：看好</strong>。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 数据校验 ===== -->
+    <div id="page-数据校验" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">✅ 数据校验报告</span>
+          <span class="section-badge" style="background:rgba(34,197,94,0.1);color:var(--green);">数据质量：A（优良）</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>维度</th><th>校验结果</th></tr>
+            <tr><td>PE/PS/PB与市值一致性</td><td><span class="tag tag-green">通过</span></td></tr>
+            <tr><td>EPS与归母净利润一致性</td><td><span class="tag tag-green">通过</span></td></tr>
+            <tr><td>同比增速自洽性</td><td><span class="tag tag-green">通过</span></td></tr>
+            <tr><td>一致预期FY1-FY3齐全性</td><td><span class="tag tag-green">通过</span></td></tr>
+          </table>
+          <div class="highlight" style="border-left-color:var(--yellow);">
+            <strong>需关注</strong>：存货增速（+24%）显著高于营收增速（+16.5%）；应收账款增速（+55%）同样偏高；毛利率连续3年下滑（59%→48%）。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 基本面研究 ===== -->
+    <div id="page-基本面研究" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📈 基本面研究 — 圣邦股份</span>
+          <span class="section-badge" style="background:rgba(67,97,238,0.1);color:var(--accent);">6.70/10 A-级</span>
+        </div>
+        <div class="section-body md-content">
+          <h2>业务结构</h2>
+          <p>电源管理（61%营收，毛利率46.4%）+ 信号链（37.7%营收，毛利率58.2%）。信号链增速更快（+26.2%），是未来扩张重点；电源管理毛利率持续承压。</p>
+          <h2>成长性</h2>
+          <p>5年营收CAGR +14.9%，2025年38.98亿元；净利润5.47亿元仍低于2022年高点8.74亿。一致预期2026E净利润+48%至8.1亿元，2年CAGR 42.3%。</p>
+          <h2>盈利能力</h2>
+          <p>毛利率从2022年高点59.4%降至2025年47.7%（-11.7pp），主因TI价格战+产品结构变化；研发费用率高达26.8%（研发人员1310人）；ROE 11.2%。</p>
+          <h2>护城河</h2>
+          <p>917项专利，研发人员占比71%，硕士+博士占比49%。</p>
+          <h2>估值</h2>
+          <p>当前股价68元，PE（TTM）77x，2026E PE 52x，2027E PE 38x。<strong>目标价75-88元，潜在涨幅+10%至+29%。增持。</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 市场情绪 ===== -->
+    <div id="page-市场情绪" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">💬 市场情绪分析</span>
+          <span class="section-badge" style="background:rgba(234,179,8,0.1);color:var(--yellow);">中性偏谨慎</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>维度</th><th>评分</th><th>核心发现</th></tr>
+            <tr><td>机构持仓</td><td class="center"><span class="tag tag-yellow">6/10</span></td><td>机构持股比例从76%降至52%，ETF被动配置为主</td></tr>
+            <tr><td>资金流向</td><td class="center"><span class="tag tag-yellow">5/10</span></td><td>近期震荡偏弱，清明前量能萎缩至地量</td></tr>
+            <tr><td>舆情情绪</td><td class="center"><span class="tag tag-green">7/10</span></td><td>国产替代叙事清晰，2025年报确认复苏</td></tr>
+            <tr><td>估值情绪</td><td class="center"><span class="tag tag-yellow">5/10</span></td><td>TTM PE 96x，预测PE 52x，处历史偏低分位</td></tr>
+            <tr><td>筹码情绪</td><td class="center"><span class="tag tag-red">4/10</span></td><td>股东户数增5倍，筹码大幅分散</td></tr>
+          </table>
+          <div class="highlight highlight-red">
+            <strong>核心风险</strong>：筹码散户化（股东户数增5倍）、机构持续减仓、定增摊薄压制、毛利率修复缓慢。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 技术分析 ===== -->
+    <div id="page-技术分析" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📉 技术分析</span>
+          <span class="section-badge" style="background:rgba(234,179,8,0.1);color:var(--yellow);">中性偏弱</span>
+        </div>
+        <div class="section-body">
+          <div class="kpi-grid" style="margin-bottom:16px;">
+            <div class="kpi-card"><div class="kpi-label">当前股价</div><div class="kpi-value">68.16</div><div class="kpi-sub">52周区间30%分位</div></div>
+            <div class="kpi-card"><div class="kpi-label">KDJ J值</div><div class="kpi-value" style="color:var(--yellow);">4.45</div><div class="kpi-sub">严重超卖</div></div>
+            <div class="kpi-card"><div class="kpi-label">RSI(6)</div><div class="kpi-value" style="color:var(--yellow);">32</div><div class="kpi-sub">接近超卖</div></div>
+          </div>
+          <h3>关键价位</h3>
+          <table>
+            <tr><th>类型</th><th>价位</th><th>说明</th></tr>
+            <tr><td><span class="tag tag-green">强支撑</span></td><td class="num">65-66元</td><td>布林带下轨，2025年11月低点延伸</td></tr>
+            <tr><td><span class="tag tag-red">强压力</span></td><td class="num">71-73元</td><td>均线密集区（MA5/10/20）</td></tr>
+            <tr><td><span class="tag tag-blue">突破确认</span></td><td class="num">73元</td><td>放量突破则中期趋势转多</td></tr>
+          </table>
+          <div class="highlight">
+            <strong>综合建议</strong>：短线关注反弹（目标71-73元，止损65元）；中线需等待突破73元确认后再加仓。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 风险评估 ===== -->
+    <div id="page-风险评估" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">⚠️ 风险评估</span>
+          <span class="section-badge" style="background:rgba(239,68,68,0.1);color:var(--red);">中高风险</span>
+        </div>
+        <div class="section-body">
+          <table>
+            <tr><th>风险事项</th><th>概率</th><th>影响</th><th>综合评级</th></tr>
+            <tr><td>TI价格战再次爆发</td><td class="num">35%</td><td class="num">高</td><td><span class="tag tag-red">极高</span></td></tr>
+            <tr><td>毛利率跌破45%</td><td class="num">40%</td><td class="num">高</td><td><span class="tag tag-red">高</span></td></tr>
+            <tr><td>存货大幅减值</td><td class="num">30%</td><td class="num">中高</td><td><span class="tag tag-red">高</span></td></tr>
+            <tr><td>估值回调（业绩不及预期）</td><td class="num">35%</td><td class="num">中高</td><td><span class="tag tag-red">高</span></td></tr>
+            <tr><td>应收账款坏账激增</td><td class="num">25%</td><td class="num">中高</td><td><span class="tag tag-yellow">中</span></td></tr>
+            <tr><td>现金流恶化</td><td class="num">30%</td><td class="num">中</td><td><span class="tag tag-yellow">中高</span></td></tr>
+          </table>
+          <div class="highlight highlight-red">
+            <strong>三大核心矛盾</strong>：①高PE估值 vs 低增速（77x PE对应增速仅9.4%）；②存货高速囤积 vs 需求复苏不确定性；③TI成本优势 vs 国产替代红利对冲。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 基金经理评估 ===== -->
+    <div id="page-基金经理评估" class="page" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🎯 基金经理最终评估</span>
+          <span class="section-badge" style="background:rgba(234,179,8,0.1);color:var(--yellow);">中性</span>
+        </div>
+        <div class="section-body md-content">
+          <h2>核心投资逻辑</h2>
+          <div class="highlight highlight-green">
+            <strong>看好</strong>：圣邦是国内模拟芯片产品线覆盖最全面、客户基础最深厚的平台型公司，一致预期2026E净利润+48%，若业绩兑现2027E PE降至38x具备吸引力。
+          </div>
+          <div class="highlight highlight-red">
+            <strong>不看好</strong>：TI价格战阴影未散，毛利率从59%跌至48%且未见拐点，存货和应收账款持续攀升压制财务质量，当前PE(TTM) 77x透支预期明显。
+          </div>
+          <h2>一句话总结</h2>
+          <p>模拟芯片国产替代的长期逻辑清晰，但高估值、低毛利修复速度与TI价格战风险构成三重约束，当前价位适合底仓配置而非重仓进攻。</p>
+          <h2>基金经理综合意见</h2>
+          <p>圣邦股份是模拟芯片国产替代赛道的核心配置标的，基本面复苏趋势已确认，但当前估值处于合理区间上沿。建议以底仓思维配置，控制仓位1.5-3%，等待65-68元建仓区间和73元突破确认信号。2026年中报是核心验证节点。</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  if (page) page.style.display = 'block';
+  event.target.closest('.nav-item').classList.add('active');
+}
+
+function highlightKeyword(kw) {
+  if (!kw.trim()) {
+    document.querySelectorAll('#content em.hl').forEach(el => {
+      const txt = document.createTextNode(el.textContent);
+      el.parentNode.replaceChild(txt, el);
+    });
+    return;
+  }
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(page => {
+    const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, null, false);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      if (node.parentNode.tagName === 'SCRIPT' || node.parentNode.tagName === 'STYLE') return;
+      const text = node.textContent;
+      const regex = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      if (regex.test(text)) {
+        const span = document.createElement('span');
+        span.innerHTML = text.replace(regex, '<em class="hl" style="background:#fef08a;padding:0 2px;border-radius:2px;">$1</em>');
+        if (node.parentNode) node.parentNode.replaceChild(span, node);
+      }
+    });
+  });
+}
+</script>
+</body>
+</html>

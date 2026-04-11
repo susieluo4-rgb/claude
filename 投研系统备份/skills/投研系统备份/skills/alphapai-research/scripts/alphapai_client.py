@@ -658,6 +658,171 @@ def cmd_watchlist(args):
         print(format_watchlist(result))
 
 
+def _parse_context_info(context_info):
+    """从 contextInfo 中提取标题和发布时间"""
+    import re
+
+    title = "未知纪要"
+    pub_time = ""
+    if context_info:
+        m_title = re.search(r"标题[：:]\s*(.+?)(?:\n|$)", context_info)
+        m_time = re.search(r"发布时间[为是为]*\s*[:：]?\s*([\d\-]+\s+[\d:]+)", context_info)
+        if m_title:
+            title = m_title.group(1).strip()
+        if m_time:
+            pub_time = m_time.group(1).strip()
+    return title, pub_time
+
+
+def _build_save_path(query, path_prefix):
+    """构建保存路径"""
+    if path_prefix:
+        base = os.path.expanduser(f"~/Research/Vault_公司基本面Agent/{path_prefix}")
+    else:
+        parts = query.strip().split() if query else []
+        if len(parts) >= 2:
+            company_folder = f"{parts[0]}_{parts[1]}"
+        elif len(parts) == 1:
+            company_folder = parts[0]
+        else:
+            company_folder = "未知公司"
+        base = os.path.expanduser(f"~/Research/Vault_公司基本面Agent/{company_folder}")
+    return base
+
+
+def cmd_transcript(args):
+    """读取完整会议纪要（近3个月全部），自动保存为 TXT 到 alphapai/ 子文件夹"""
+    config = load_config()
+    if not config:
+        print(
+            "[错误] 未找到配置，请先运行: python alphapai_client.py config --set-key YOUR_KEY",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    client = AlphaPaiClient(config)
+
+    # 设置默认时间范围：近3个月
+    if not args.start:
+        from datetime import datetime, timedelta
+
+        end_date = datetime.today().strftime("%Y-%m-%d")
+        start_date = (datetime.today() - timedelta(days=90)).strftime("%Y-%m-%d")
+    else:
+        start_date = args.start
+        end_date = args.end or datetime.today().strftime("%Y-%m-%d")
+
+    result = client.recall_data(
+        query=args.query,
+        is_cut_off=False,
+        recall_type=["roadShow"],
+        start_time=start_date,
+        end_time=end_date,
+    )
+
+    if result.get("code") != 200000:
+        print(f"[错误] code={result.get('code')} message={result.get('message')}", file=sys.stderr)
+        sys.exit(1)
+
+    items = result.get("data", [])
+    if not items:
+        print(f"未找到纪要（{start_date} 至 {end_date}）")
+        sys.exit(0)
+
+    base = _build_save_path(args.query, args.path_prefix)
+    save_dir = os.path.join(base, "alphapai")
+    os.makedirs(save_dir, exist_ok=True)
+
+    print(f"📂 目标文件夹：{save_dir}")
+    print(f"📅 时间范围：{start_date} 至 {end_date}")
+    print(f"🔍 共检索到 {len(items)} 条纪要，开始保存...\n")
+
+    saved_count = 0
+    for i, item in enumerate(items, 1):
+        record_id = item.get("id", "")
+        context_info = item.get("contextInfo", "")
+        chunks = item.get("chunks", [])
+        full_text = "\n\n".join(chunks)
+
+        title, pub_time = _parse_context_info(context_info)
+
+        safe_title = (
+            title.replace("（", "(")
+            .replace("）", ")")
+            .replace("/", "_")
+            .replace(" ", "_")
+            .replace("|", "_")
+            .replace(":", "_")
+            .replace("*", "_")
+        )
+        filename = f"{safe_title}_{record_id}.txt"
+        filepath = os.path.join(save_dir, filename)
+
+        # 避免重复写入（同名文件加序号）
+        if os.path.exists(filepath) and i == 1:
+            filepath = os.path.join(save_dir, f"{safe_title}_{record_id}_{i}.txt")
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(f"标题：{title}\n")
+            f.write(f"发布时间：{pub_time}\n")
+            f.write(f"记录ID：{record_id}\n")
+            f.write(f"Chunk数：{len(chunks)}\n")
+            f.write("=" * 60 + "\n\n")
+            f.write(full_text)
+
+        print(f"  [{i}/{len(items)}] ✅ 已保存：{title}")
+        print(f"         记录ID：{record_id} | {len(chunks)} chunks | {len(full_text)} 字")
+
+        # --summarize：对每篇纪要生成摘要
+        if args.summarize:
+            print(f"  📝 正在生成摘要...")
+            summary_question = (
+                f"请总结这篇会议纪要的核心内容，包括：1）管理层对业绩的评价；"
+                f"2）业务进展和新签订单情况；3）行业展望与战略；4）投资者问答中的关键问题与回答。"
+                f"\n纪要标题：{title}\n发布时间：{pub_time}"
+            )
+            qa_result = client.qa_text(
+                question=summary_question,
+                mode="Think",
+                is_stream=True,
+            )
+            answer = qa_result.get("answer", "")
+            references = qa_result.get("references", [])
+
+            summary_lines = [f"# {title} — 会议纪要摘要\n"]
+            summary_lines.append(f"**发布时间**：{pub_time}\n")
+            summary_lines.append(f"**记录ID**：{record_id}\n")
+            summary_lines.append(f"**来源**：AlphaPai 路演纪要\n")
+            summary_lines.append("---\n\n")
+            summary_lines.append(answer)
+            if references:
+                summary_lines.append("\n\n---\n**参考来源**：\n")
+                for j, ref in enumerate(references, 1):
+                    ref_date = f" ({ref.get('publishDate', '')})" if ref.get("publishDate") else ""
+                    summary_lines.append(f"{j}. [{ref.get('title', '')}]{ref_date}")
+            summary_text = "".join(summary_lines)
+
+            summary_filename = f"{safe_title}_摘要.md"
+            summary_filepath = os.path.join(save_dir, summary_filename)
+
+            # 避免覆盖已有摘要（同名加序号）
+            if os.path.exists(summary_filepath):
+                summary_filepath = os.path.join(save_dir, f"{safe_title}_摘要_{i}.md")
+
+            with open(summary_filepath, "w", encoding="utf-8") as f:
+                f.write(summary_text)
+
+            print(f"  📝 摘要已保存：{len(answer)} 字")
+
+        saved_count += 1
+
+    print(f"\n🎉 完成！共保存 {saved_count} 篇纪要至：")
+    print(f"   {save_dir}")
+
+    if args.open:
+        os.system(f'open "{save_dir}"')
+
+
 def cmd_image(args):
     config = load_config()
     if not config:
@@ -859,6 +1024,30 @@ def main():
     p_wl = sub.add_parser("watchlist", help="查看自选股列表")
     p_wl.add_argument("--json", action="store_true", help="输出原始JSON（供程序解析）")
 
+    # --- transcript ---
+    p_tc = sub.add_parser(
+        "transcript",
+        help="读取完整会议纪要（自动保存为 TXT 到 ~/Research/Vault_公司基本面Agent/{path_prefix}/alphapai/）",
+    )
+    p_tc.add_argument("--query", "-q", required=True, help="查询问题，如 公司名 股票代码 纪要关键词")
+    p_tc.add_argument(
+        "--path-prefix",
+        metavar="PATH",
+        help="完整相对路径，如 11_公司列表/Z/中芯国际_688981（radar-agent 调用时传入）",
+    )
+    p_tc.add_argument("--start", metavar="YYYY-MM-DD", help="数据筛选开始日期（默认近3个月）")
+    p_tc.add_argument("--end", metavar="YYYY-MM-DD", help="数据筛选结束日期（默认今天）")
+    p_tc.add_argument(
+        "--open",
+        action="store_true",
+        help="保存后自动打开文件夹",
+    )
+    p_tc.add_argument(
+        "--summarize",
+        action="store_true",
+        help="保存纪要后，自动调用 qa 生成摘要并保存为 .md 文件",
+    )
+
     # --- image ---
     p_img = sub.add_parser("image", help="搜图表（从研报/公告中搜索图片和表格）")
     p_img.add_argument("--query", "-q", required=True, help="搜索内容")
@@ -888,6 +1077,7 @@ def main():
         "recall": cmd_recall,
         "agent": cmd_agent,
         "report": cmd_report,
+        "transcript": cmd_transcript,
         "image": cmd_image,
         "watchlist": cmd_watchlist,
     }[args.command](args)
