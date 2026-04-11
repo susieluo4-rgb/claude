@@ -1,6 +1,6 @@
-# RL-投研系统 Sync to GitHub
+# RL-投研系统 Sync to GitHub v2
 
-将多Agent投研系统的所有配置文件同步推送到 GitHub 仓库。
+增量同步投研系统配置到 GitHub 仓库，**只提交有变更的文件**。
 
 ---
 
@@ -9,43 +9,46 @@
 ```
 /sync-skills
 /RL-sync-agent-system
-```
 /sync-agent-system
+"同步到GitHub"
+"更新GitHub"
 ```
 
 ---
 
-## 备份范围
+## 同步范围（仅 RL/投研 相关）
 
-| 路径 | 说明 | 重要性 |
-|------|------|--------|
-| `~/.claude/skills/` | 所有Skill触发器（含投研团队Skill） | ⭐⭐⭐ |
-| `~/.claude/settings.json` | Claude Code全局设置 | ⭐⭐⭐ |
-| `~/Research/Vault_公司基本面Agent/03_配置/` | 基本面Agent人设 | ⭐⭐⭐ |
-| `~/Research/Vault_*/` | 所有Agent Vault（9个） | ⭐⭐⭐ |
-| `~/0.Agent 投研总监/reports/` | 生成的报告 | ⭐⭐ |
-| `~/.claude/projects/-Users-zhuang225-0-Agent-----/memory/` | 记忆文件 | ⭐⭐ |
-| `~/.claude/plans/` | 计划文件 | ⭐ |
+| 源路径 | GitHub 目标路径 | 说明 |
+|--------|----------------|------|
+| `~/.claude/skills/RL-*/` | `投研系统备份/skills/RL-*/` | 所有 RL 开头 skill |
+| `~/.claude/skills/投研*/` | `投研系统备份/skills/投研*/` | 投研团队 skill |
+| `~/投研系统/skills/` | `投研系统备份/skills/` | 投研系统 skills 副本 |
+| `~/.claude/settings.json` | `投研系统备份/settings.json` | 全局配置 |
+| `~/Research/Vault_公司基本面Agent/03_配置/` | `投研系统备份/Vaults/配置/` | Agent 人设 |
+| `~/.claude/projects/-Users-zhuang225-LLM--/memory/` | `投研系统备份/memory/` | 记忆文件 |
+| `~/.claude/plans/*.md` | `投研系统备份/plans/` | 计划文件 |
 
-**已排除（敏感信息）：**
-- `~/.mcp.json` — 包含API密钥，**请勿上传GitHub**
-- `~/.claude/settings.json` 中的个人token
+**排除项（不推送）：**
+- `~/.mcp.json` — 含 API 密钥
+- `__pycache__/` — Python 缓存
+- `*.pyc`, `*.pyo` — 编译字节码
+- `.DS_Store` — macOS 元数据
+- `alert_history.db` — 本地数据库
+- `skills/skills/` — 嵌套重复目录
+- `投研系统备份/skills/投研系统备份/` — 自引用嵌套
 
 ---
 
-## 执行步骤
+## 执行流程
 
-### 1. 定位备份根目录
+### Step 1: 确认仓库状态
+
 ```bash
 cd ~
+git status --short 2>/dev/null
 ```
 
-### 2. 检查git状态
-```bash
-git status
-```
-
-若还没有初始化过git，执行初始化：
+若还没有初始化 git：
 ```bash
 git init
 git remote add origin https://github.com/susieluo4-rgb/claude.git
@@ -53,96 +56,127 @@ git config user.email "claude@research.ai"
 git config user.name "Claude Research"
 ```
 
-### 3. 克隆仓库到本地（如首次）
-```bash
-git clone https://github.com/susieluo4-rgb/claude.git ~/backup_temp
-```
-
-### 4. 同步文件到本地备份目录
+### Step 2: 清理嵌套冗余目录
 
 ```bash
-# 创建备份目录结构
-mkdir -p ~/backup_temp/投研系统备份
-
-# 同步skills
-rsync -av ~/.claude/skills/ ~/backup_temp/投研系统备份/skills/
-
-# 同步settings.json
-cp ~/.claude/settings.json ~/backup_temp/投研系统备份/
-
-# 同步所有Vault
-rsync -av ~/Research/Vault_*/ ~/backup_temp/投研系统备份/Vaults/
-
-# 同步报告
-rsync -av ~/0.Agent\ 投研总监/reports/ ~/backup_temp/投研系统备份/reports/
-
-# 同步记忆文件
-rsync -av ~/.claude/projects/-Users-zhuang225-0-Agent-----/memory/ ~/backup_temp/投研系统备份/memory/
-
-# 同步计划文件
-rsync -av ~/.claude/plans/*.md ~/backup_temp/投研系统备份/plans/
+cd ~
+# 删除嵌套的 skills/skills/ 目录（rsync 误操作产物）
+rm -rf "投研系统备份/skills/投研系统备份/skills/"
+# 删除自引用嵌套
+rm -rf "投研系统备份/skills/投研系统备份/skills/投研系统备份/"
 ```
 
-### 5. 提交推送
+### Step 3: 增量同步 Skills
+
+**不使用 rsync --delete**，仅复制有变更的文件：
+
 ```bash
-cd ~/backup_temp
-git add .
-git commit -m "Update 投研系统 - $(date '+%Y-%m-%d %H:%M')"
-git push origin main
+# 同步 .claude/skills/ 中的 RL-* 和 投研* 目录
+cd ~
+for skill in .claude/skills/RL-* .claude/skills/投研*; do
+  [ -d "$skill" ] && rsync -av --exclude='__pycache__' --exclude='.DS_Store' --exclude='*.pyc' "$skill/" "投研系统备份/skills/$(basename $skill)/"
+done
 ```
+
+### Step 4: Stage 仅变更的文件
+
+```bash
+cd ~
+# 只 stage 投研系统备份目录下的变更
+git add "投研系统备份/skills/" 2>/dev/null
+git add "投研系统备份/settings.json" 2>/dev/null
+git add "投研系统备份/memory/" 2>/dev/null
+git add "投研系统备份/plans/" 2>/dev/null
+
+# 查看实际变更了哪些文件
+git diff --cached --name-only
+```
+
+### Step 5: 判断是否需要提交
+
+```bash
+# 如果没有变更，跳过 commit
+if [ -z "$(git diff --cached --name-only)" ]; then
+  echo "✅ 无变更，已是最新"
+  # 停止后续步骤
+fi
+```
+
+### Step 6: 提交并推送
+
+```bash
+cd ~
+# 生成变更摘要
+CHANGED=$(git diff --cached --name-only | head -20)
+COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')
+
+git commit -m "feat: 同步投研系统 — ${COUNT} 个文件变更 ($(date '+%Y-%m-%d'))
+
+变更文件:
+${CHANGED}
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+"
+
+# 先 pull 远程变更（如有）
+git pull --rebase origin main 2>&1
+
+# 推送
+git push origin main 2>&1
+```
+
+### Step 7: 如果 pull/push 超时（网络问题）
+
+如果 `git pull` 或 `git push` 超过 30 秒无响应：
+
+1. 停止当前操作
+2. 提示用户网络较慢，建议：
+   - 切换网络环境后重试
+   - 或在 GitHub 网页端手动上传变更
+3. 变更已在本地 commit，不会丢失
 
 ---
 
-## 一键备份命令
+## 完整执行脚本（一键版）
 
 ```bash
-# 创建临时备份目录
-git clone https://github.com/susieluo4-rgb/claude.git ~/backup_temp --depth 1
+cd ~
 
-# 同步所有文件
-mkdir -p ~/backup_temp/投研系统备份
-rsync -av ~/.claude/skills/ ~/backup_temp/投研系统备份/skills/
-cp ~/.claude/settings.json ~/backup_temp/投研系统备份/
-rsync -av ~/Research/Vault_*/ ~/backup_temp/投研系统备份/Vaults/
-rsync -av ~/0.Agent\ 投研总监/reports/ ~/backup_temp/投研系统备份/reports/
-rsync -av ~/.claude/projects/-Users-zhuang225-0-Agent-----/memory/ ~/backup_temp/投研系统备份/memory/
-rsync -av ~/.claude/plans/*.md ~/backup_temp/投研系统备份/plans/
+# 1. 清理冗余嵌套
+rm -rf "投研系统备份/skills/投研系统备份/skills/" 2>/dev/null
+rm -rf "投研系统备份/skills/投研系统备份/skills/投研系统备份/" 2>/dev/null
 
-# 提交推送
-cd ~/backup_temp
-git add .
-git commit -m "Update 投研系统 - $(date '+%Y-%m-%d %H:%M')"
-git push origin main
+# 2. 增量同步 RL 和 投研 skills
+for skill in .claude/skills/RL-* .claude/skills/投研*; do
+  [ -d "$skill" ] && rsync -av --exclude='__pycache__' --exclude='.DS_Store' --exclude='*.pyc' "$skill/" "投研系统备份/skills/$(basename $skill)/"
+done
 
-# 清理临时目录
-rm -rf ~/backup_temp
-```
+# 3. 同步 settings.json 和 memory
+cp ~/.claude/settings.json "投研系统备份/" 2>/dev/null
+rsync -av --exclude='.DS_Store' .claude/projects/-Users-zhuang225-LLM--/memory/ "投研系统备份/memory/" 2>/dev/null
 
----
+# 4. Stage 变更
+git add "投研系统备份/skills/" 2>/dev/null
+git add "投研系统_backup/settings.json" 2>/dev/null
+git add "投研系统备份/memory/" 2>/dev/null
 
-## 从GitHub恢复
+# 5. 检查是否有变更
+CHANGED_FILES=$(git diff --cached --name-only 2>/dev/null)
+if [ -z "$CHANGED_FILES" ]; then
+  echo "✅ 无变更，已是最新"
+  exit 0
+fi
 
-```bash
-# 克隆仓库
-git clone https://github.com/susieluo4-rgb/claude.git ~/restore_temp
+# 6. 提交
+FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l | tr -d ' ')
+git commit -m "feat: 同步投研系统 — ${FILE_COUNT} 个文件变更 ($(date '+%Y-%m-%d'))
 
-# 恢复skills
-rsync -av ~/restore_temp/投研系统备份/skills/ ~/.claude/skills/
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+"
 
-# 恢复settings.json
-cp ~/restore_temp/投研系统备份/settings.json ~/.claude/
-
-# 恢复Vaults
-rsync -av ~/restore_temp/投研系统备份/Vaults/ ~/Research/
-
-# 恢复报告
-rsync -av ~/restore_temp/投研系统备份/reports/ ~/0.Agent\ 投研总监/
-
-# 恢复记忆
-rsync -av ~/restore_temp/投研系统备份/memory/ ~/.claude/projects/-Users-zhuang225-0-Agent-----/memory/
-
-# 清理
-rm -rf ~/restore_temp
+# 7. 推送
+git pull --rebase origin main 2>&1
+git push origin main 2>&1
 ```
 
 ---
@@ -153,12 +187,23 @@ rm -rf ~/restore_temp
 |------|-----|
 | 仓库地址 | https://github.com/susieluo4-rgb/claude |
 | 远程协议 | HTTPS |
+| 本地根目录 | `~` |
+
+---
+
+## 版本历史
+
+| 版本 | 日期 | 变更 |
+|------|------|------|
+| v2.0 | 2026-04-12 | 改为增量同步，排除冗余/缓存，自动检测变更 |
+| v1.0 | - | 全量 rsync --delete 覆盖（已废弃） |
 
 ---
 
 ## 注意事项
 
-1. **敏感文件不推送**：`~/.mcp.json` 包含API密钥，**禁止上传GitHub**
-2. **定期备份**：建议每次对skill或配置有实质更新后执行
-3. **恢复前先pull**：从另一设备恢复前，先 `git pull` 同步最新
-4. **Vaults体积较大**：如Vaults文件很多，可先压缩再同步
+1. **增量同步**：只同步 `RL-*` 和 `投研*` 开头的 skill，不碰 3rd party skills
+2. **自动排重**：清理嵌套 `skills/skills/` 和 `__pycache__`
+3. **无变更跳过**：如果没有任何文件变更，自动停止不提交
+4. **网络超时保护**：push 超时不 force push，保留本地 commit 下次重试
+5. **敏感文件不推送**：`~/.mcp.json` 绝不上 GitHub
