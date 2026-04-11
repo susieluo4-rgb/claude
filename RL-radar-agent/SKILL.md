@@ -1,14 +1,14 @@
 ---
-name: RL-radar-agent
+name: rl-radar-agent
 description: 投研系统雷达Agent — 多数据源信息收集层。当用户说"投研 [公司]"、研究 [公司]、分析 [公司]、雷达 [公司]、或启动投研任务时，Lead Agent会先调用本Agent预先收集目标公司的外部数据（财报/研报/纪要/宏观/行业），为后续Agent提供数据支撑。本Agent为被动响应模式，随投研任务启动。
 metadata:
-    version: 1.1
+    version: 1.6
     type: data-collection-agent
     position: 前置数据收集层
-    data_sources: alphapai-research, iFind, rabyte, 本地文件, 港交所披露
+    data_sources: alphapai-research, iFind, rabyte, 本地文件, 港交所披露, portfolio-monitor
 ---
 
-# RL-Radar-Agent — 投研系统雷达Agent
+# rl-radar-agent — 投研系统雷达Agent
 
 ## 角色定位
 
@@ -104,6 +104,7 @@ Lead Agent 调用 雷达Agent（被动响应）
   → 如有最新年报/季报PDF，直接读取
 
 优先级 2：iFind MCP
+  → get_stock_performance：最新行情（涨跌幅/换手率）、融资融券余额
   → get_stock_financials：最新财务报表（使用自然语言query）
   → get_stock_info + get_stock_summary：公司基本信息
   → get_edb_data + search_edb：宏观/行业数据
@@ -113,6 +114,13 @@ Lead Agent 调用 雷达Agent（被动响应）
   → recall --type roadShow,report,comment：路演纪要+研报+点评
   → qa --question "{公司}近期有什么重大消息？"
   → report --code {代码}：最新公告列表
+
+优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
+  → 财务数据、行情估值、公司信息、宏观数据：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type data --query "{公司} {指标}"
+  → 新闻、公告、舆情：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type news --query "{公司} 最新公告"
+  → ⚠️ 注意：每日有次数上限；免费用户仅支持3年内数据；不支持 ESG/风险指标
 
 优先级 4：iFind新闻
   → search_news：最新新闻舆情
@@ -129,6 +137,7 @@ Lead Agent 调用 雷达Agent（被动响应）
   → 如有最新年报/季报PDF，直接读取
 
 优先级 2：iFind MCP
+  → get_stock_performance：最新行情（涨跌幅/换手率）、融资融券余额
   → get_stock_financials：最新财务报表（使用自然语言query）
   → get_stock_info：公司基本信息
   → search_news：最新新闻舆情
@@ -138,6 +147,11 @@ Lead Agent 调用 雷达Agent（被动响应）
   → recall --type roadShow,report,comment：路演纪要+研报+点评
   → qa --question "{公司}近期有什么重大消息？"
 
+优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
+  → 财务数据、行情估值：
+    python3 "/Users/zhuang225/Research/ifind mcp&skill/miaoxiang/mx_api.py" --type data --query "{股票代码} {指标}"
+  → ⚠️ 港股用股票代码格式（如 0700.HK）；每日有次数上限
+
 优先级 4：港交所披露（补充）
   → https://www.hkexnews.hk/ 搜索最新年报/中报PDF
   → 下载PDF存入Vault_公司基本面Agent对应文件夹
@@ -146,19 +160,47 @@ Lead Agent 调用 雷达Agent（被动响应）
   → 仅在其他途径均无结果时使用
 ```
 
+### Step 2.5：读取增量状态（新增）
+
+**读取 last_sync.json**，判断每个数据类型是否需要重新拉取：
+
+```
+路径：~/Research/Vault_共享知识库/last_sync.json
+首次执行：文件不存在，则创建，全量拉取所有数据
+非首次执行：读取文件，按各数据类型的缓存有效期判断是否需要重新拉取
+```
+
+**缓存有效期规则：**
+| 数据类型 | 缓存有效期 | 超过有效期则 |
+|---------|---------|------------|
+| 财务数据 | 7天 | 重新拉取（财报数据稳定，不频繁变动） |
+| 技术行情 | 24小时 | 重新拉取（每次覆盖近5日） |
+| 路演纪要 | 7天 | 增量拉取（按时间窗口过滤） |
+| 研报摘要 | 7天 | 增量拉取（按时间窗口过滤） |
+| 公告列表 | 24小时 | 重新拉取 |
+| 舆情热点 | 12小时 | 重新拉取 |
+
+**缓存命中时**：跳过 API 调用，直接使用 `Vault_共享知识库/{公司名}_{代码}/` 下的已有文件，
+并在报告中标注 `（缓存：有效）`
+
+**缓存过期时**：按 Step 2 优先级重新拉取，并在报告中标注 `（缓存：已过期，重新拉取）`
+
 ### Step 3：收集内容清单
 
-| 数据类型 | A股来源 | 港股来源 | 输出格式 |
-|---------|---------|---------|---------|
-| 最新年报/季报财务数据 | iFind get_stock_financials / 本地PDF | 港交所披露PDF + AlphaPai | 结构化dict |
-| 公司基本信息 | iFind get_stock_info | AlphaPai agent | 结构化dict |
-| 近期公告列表（10条） | AlphaPai report | AlphaPai report | 列表 |
-| 路演纪要（近3个月） | AlphaPai recall --type roadShow | AlphaPai recall --type roadShow | Markdown文本 |
-| 券商研报摘要 | AlphaPai recall --type report | AlphaPai recall --type report | Markdown文本 |
-| 业绩点评 | AlphaPai agent --mode 1（如有报告ID） | AlphaPai agent --mode 1 | Markdown文本 |
-| 宏观/行业数据 | iFind EDB | 不适用 | 结构化dict |
-| 舆情/热点 | AlphaPai qa + iFind新闻 | AlphaPai qa + iFind新闻 | Markdown文本 |
-| 本地已有文件 | Glob扫描 | Glob扫描 | 文件路径列表 |
+| 数据类型 | A股来源 | 港股来源 | 输出格式 | 增量策略 |
+|---------|---------|---------|---------|---------|
+| 最新年报/季报财务数据 | iFind get_stock_financials / 本地PDF | 港交所披露PDF + AlphaPai | 结构化dict | 缓存7天；财报发布后主动刷新 |
+| **技术行情数据** | iFind get_stock_performance | iFind get_stock_performance | 结构化dict | 缓存24小时；每次覆盖近5日 |
+| 公司基本信息 | iFind get_stock_info | AlphaPai agent | 结构化dict | 缓存7天 |
+| 近期公告列表（10条） | AlphaPai report | AlphaPai report | 列表 | 缓存24小时 |
+| 路演纪要（近3个月） | AlphaPai recall --type roadShow | AlphaPai recall --type roadShow | Markdown文本 | 缓存7天；按时间窗口增量拉取 |
+| 券商研报摘要 | AlphaPai recall --type report | AlphaPai recall --type report | Markdown文本 | 缓存7天；按时间窗口增量拉取 |
+| 业绩点评 | AlphaPai agent --mode 1（如有报告ID） | AlphaPai agent --mode 1 | Markdown文本 | 缓存7天 |
+| 宏观/行业数据 | iFind EDB | 不适用 | 结构化dict | 缓存7天 |
+| 舆情/热点 | AlphaPai qa + iFind新闻 | AlphaPai qa + iFind新闻 | Markdown文本 | 缓存12小时 |
+| 本地已有文件 | Glob扫描 | Glob扫描 | 文件路径列表 | 不适用 |
+
+> 注：缓存"有效"时直接使用已有文件；"过期"时才重新拉取。路演纪要/研报摘要每次拉取时传入时间窗口参数实现增量。
 
 ### Step 4：输出整理
 
@@ -168,10 +210,12 @@ Lead Agent 调用 雷达Agent（被动响应）
 ## 雷达Agent数据收集报告 — {公司名称}（{股票代码}）
 
 ### 数据时效性
-- 财报数据：{最新财报期}
-- 路演纪要：{最新纪要日期}（近3个月共{条数}条）
-- 公告：{最新公告日期}
-- 研报：{最新研报日期}
+- 财报数据：{最新财报期}（缓存：有效/已过期）
+- 技术行情：{最新行情日期}（缓存：有效/已过期）
+- 路演纪要：{最新纪要日期}（近3个月共{条数}条，缓存：有效/已过期）
+- 公告：{最新公告日期}（缓存：有效/已过期）
+- 研报：{最新研报日期}（缓存：有效/已过期）
+- 舆情热点：{最新舆情时间}（缓存：有效/已过期）
 
 ### 已获取数据清单
 1. 【财务数据】✅ 已获取（来源：{本地文件/iFind/AlphaPai}）
@@ -179,18 +223,37 @@ Lead Agent 调用 雷达Agent（被动响应）
 3. 【公告列表】✅ 已获取（来源：AlphaPai，共10条）
 4. 【路演纪要】✅ 已获取（来源：AlphaPai，共X条）
 5. 【研报摘要】✅ 已获取（来源：AlphaPai，共X条）
-6. 【宏观数据】✅/⚠️ 未获取（原因：...）
-7. 【舆情热点】✅ 已获取（来源：AlphaPai+iFind新闻）
-8. 【本地文件】✅/⚠️ 已有{文件名}，建议优先使用
-9. 【港交所披露】✅/⚠️ 已下载/年报缺失待补全
+6. 【技术行情数据】✅ 已获取（来源：iFind get_stock_performance）
+   - 近5日涨跌幅、换手率
+   - 最新融资融券余额及近期变化趋势
+7. 【宏观数据】✅/⚠️ 未获取（原因：...）
+8. 【舆情热点】✅ 已获取（来源：AlphaPai+iFind新闻）
+9. 【本地文件】✅/⚠️ 已有{文件名}，建议优先使用
+10. 【港交所披露】✅/⚠️ 已下载/年报缺失待补全
 
 ### 关键数据摘要
 （从收集的数据中提取最重要信息，供后续Agent快速参考）
+
+### 技术面数据摘要
+（从 get_stock_performance 提取，供技术分析Agent直接使用）
+- 近5日累计涨跌幅：{X}%
+- 近5日平均换手率：{X}%
+- 最新融资融券余额：{X}（较上周变化：{+/-X}）
+- 近期趋势：{上涨/下跌/震荡}
 
 ### 数据质量评估
 - 完整性：{高/中/低}
 - 时效性：{高/中/低}
 - 可信度：{高/中/低}
+
+### 数据交叉验证
+（同一指标从多数据源获取，标注差异，不做仲裁）
+| 指标 | iFind | AlphaPai/本地文件 | 差异 |
+|------|-------|------------------|------|
+| 营业收入（最新一期） | {X}亿元 | {Y}亿元 | ⚠️ 差异{X-Y}亿元（{占比}%） |
+| 净利润（最新一期） | {X}亿元 | — | ✅ 一致 |
+（仅列出存在差异的指标；一致时标注✅；无对比来源时标注"—"）
+⚠️ 差异说明：多数据源差异可能源于口径不同（合并/母公司/追溯调整），留待基本面Agent判断。
 
 ---
 数据收集完成时间：{YYYY-MM-DD HH:MM}
@@ -211,7 +274,29 @@ Lead Agent 调用 雷达Agent（被动响应）
 ├── 03_公告列表_{日期}.md       ← 最新公告
 ├── 04_路演纪要_{日期}.md       ← AlphaPai路演纪要
 ├── 05_研报摘要_{日期}.md       ← AlphaPai研报
-└── 06_宏观数据_{日期}.json     ← iFind EBD数据
+├── 06_宏观数据_{日期}.json     ← iFind EBD数据
+└── 07_技术行情数据_{日期}.json ← iFind get_stock_performance 数据
+
+**3. last_sync.json（增量同步记录，必须更新）：**
+```
+路径：~/Research/Vault_共享知识库/last_sync.json
+首次：文件不存在则创建
+每次收集完成后：更新对应股票+数据类型的 last_sync 时间戳
+```
+格式：
+```json
+{
+  "{股票代码}": {
+    "财务数据": { "last_sync": "2026-04-09T10:00:00", "last_data_date": "2025-12-31" },
+    "技术行情": { "last_sync": "2026-04-09T10:00:00" },
+    "路演纪要": { "last_sync": "2026-04-01T10:00:00" },
+    "研报摘要": { "last_sync": "2026-04-01T10:00:00" },
+    "公告列表": { "last_sync": "2026-04-09T09:00:00" },
+    "舆情热点": { "last_sync": "2026-04-09T08:00:00" }
+  }
+}
+```
+> 注意：每次 Step 5 完成后，必须同步更新 last_sync.json。只拉取了部分数据类型时，只更新对应部分的时间戳。
 ```
 
 **2. 基本面Agent文件夹**（与基本面Agent共享，作为double check）：
@@ -365,6 +450,41 @@ search_news({
 })
 ```
 
+### 获取技术行情数据
+
+**⚠️ 重要**：单个 query 中同时请求"涨跌幅/换手率"和"融资融券"，会返回两份数据，
+合并为一次输出（见下方示例）。
+
+```javascript
+// A股 - 行情 + 融资融券（可合并在同一次调用中）
+get_stock_performance({
+  query: "{公司名称} {股票代码} 最近5日的涨跌幅、换手率、成交量、融资融券余额"
+})
+
+// 港股 - 行情
+get_stock_performance({
+  query: "{股票代码} {公司名称} 近期涨跌幅、换手率"
+})
+```
+
+**返回关键字段：**
+- 涨跌幅（%）、涨跌（元）
+- 换手率（%）、区间换手率（%）
+- 融资融券余额（元）
+- 日期序列（近5-20个交易日）
+
+**示例返回：**
+```json
+{
+  "600519.SH": {
+    "日期": "20260409",
+    "涨跌幅": "-0.31%",
+    "换手率": "0.17%",
+    "融资融券余额": "167.84亿"
+  }
+}
+```
+
 ## 港交所披露查询
 
 港股财务数据主要来源：
@@ -398,13 +518,15 @@ search_news({
 
 | 错误类型 | 处理方式 |
 |---------|---------|
-| iFind Token失效 | 切换到AlphaPai作为主要数据源 |
+| iFind MCP + 备用脚本均限流/失效 | 切换到东方财富妙想（mx_api.py） |
+| 妙想 API 也限流（每日上限） | 切换到 AlphaPai 作为主要数据源 |
 | iFind港股财务数据为空 | 降级到港交所披露 + AlphaPai |
-| AlphaPai API Key缺失 | 降级到iFind + 本地文件 |
+| AlphaPai API Key缺失 | 降级到iFind/妙想 + 本地文件 |
 | 本地文件不存在 | 跳过，继续其他数据源 |
 | 港交所披露下载失败 | 标记缺失，记录需要补全，继续后续 |
 | 网络超时 | 重试1次，失败则记录"⚠️ 获取失败"继续后续 |
-| 两者均无数据 | 输出空白报告，标注"⚠️ 全量数据获取失败" |
+| 所有数据源均无数据 | 输出空白报告，标注"⚠️ 全量数据获取失败" |
+| 多数据源同一指标冲突 | 在报告中标记⚠️，列出来源及数值，不仲裁，留给基本面Agent判断 |
 
 ## 性能要求
 
@@ -431,8 +553,11 @@ search_news({
 5. **优先使用本地**：本地已有文件优先使用，避免重复下载
 6. **港股财务数据**：以港交所披露PDF为准，iFind财务数据可能为空
 7. **Step 1.5必须执行**：在收集任何数据前，必须先完成本地基本面文件夹核查
+8. **增量同步**：Step 2.5 读取 last_sync.json，缓存有效时跳过API调用；每次收集完成后必须更新 last_sync.json
+9. **⚠️ 财报PDF必须下载（v1.6新增，核心修复）**：API返回结构化财务数据 ≠ PDF已下载。**财报PDF下载是独立任务，与API数据获取并行执行，互不替代。** 即使iFind/妙想已返回完整的财务数据，仍必须完成Step 1.5的PDF完整性检查并下载缺失的年报/中报/季报。这是"数据源短路"问题的修复 — 此前雷达Agent在API返回数据后即认为任务完成，跳过了PDF下载步骤。
 
 ---
 
-*版本：v1.1 | 2026-04-08*
-*数据源：alphapai-research + iFind MCP + rabyte + 本地文件 + 港交所披露*
+*版本：v1.6 | 2026-04-11*
+*数据源：alphapai-research + iFind MCP + 东方财富妙想 + rabyte + 本地文件 + 港交所披露*
+*核心变更：v1.6 新增财报PDF强制下载规则，修复"数据源短路"问题*
