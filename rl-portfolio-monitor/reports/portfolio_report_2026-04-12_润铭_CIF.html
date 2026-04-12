@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>持仓监控日报 2026-04-12</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e0e3eb;
+    --text-muted: #8b8fa3;
+    --accent: #3b82f6;
+    --red: #22c55e;
+    --red-light: #86efac;
+    --green: #ef4444;
+    --green-light: #f87171;
+    --yellow: #eab308;
+    --blue: #6366f1;
+    --mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; line-height: 1.5; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; }
+  .kpi-row { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 24px; min-width: 140px; }
+  .kpi .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .kpi .value { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); }
+  .kpi .value.red { color: var(--red); }
+  .kpi .value.green { color: var(--green); }
+  .kpi .value.up { color: var(--red-light); }
+  .kpi .value.down { color: var(--green-light); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 20px; }
+  th.sortable:hover { color: var(--text); }
+  th.sortable .sort-arrow { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .num { font-family: var(--mono); text-align: right; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-red-light { background: rgba(239,68,68,0.08); color: #fca5a5; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-green { background: rgba(34,197,94,0.15); color: #86efac; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-green-light { background: rgba(34,197,94,0.08); color: #bbf7d0; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: #fde047; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-blue { background: rgba(99,102,241,0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-na { background: rgba(139,143,163,0.08); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .badge-neutral { background: rgba(139,143,163,0.15); color: #8b8fa3; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+  .row-red { background: rgba(239,68,68,0.04); }
+  .row-green { background: rgba(34,197,94,0.04); }
+  .row-red-light { background: rgba(239,68,68,0.02); }
+  .row-green-light { background: rgba(34,197,94,0.02); }
+  .row-na { opacity: 0.5; }
+  .no-alerts { color: var(--text-muted); text-align: center; padding: 24px; }
+  .footer { text-align: center; color: var(--text-muted); font-size: 0.75rem; margin-top: 24px; }
+  .contrib-total { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; padding: 12px 16px; background: rgba(59,130,246,0.1); border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .contrib-note { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
+  /* Tab 切换 */
+  .tab-input { display: none; }
+  .tab-labels { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+  .tab-label {
+    padding: 10px 24px; cursor: pointer; font-weight: 600;
+    color: var(--text-muted); font-size: 0.9rem; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.2s;
+  }
+  .tab-label:hover { color: var(--text); }
+  .tab-panel { display: none; }
+  #tab-0:checked ~ .tab-labels label[for="tab-0"],
+  #tab-1:checked ~ .tab-labels label[for="tab-1"],
+  #tab-2:checked ~ .tab-labels label[for="tab-2"],
+  #tab-3:checked ~ .tab-labels label[for="tab-3"],
+  #tab-4:checked ~ .tab-labels label[for="tab-4"] {
+    color: var(--text); border-bottom-color: var(--accent);
+  }
+  #tab-0:checked ~ .tab-panels #panel-0,
+  #tab-1:checked ~ .tab-panels #panel-1,
+  #tab-2:checked ~ .tab-panels #panel-2,
+  #tab-3:checked ~ .tab-panels #panel-3,
+  #tab-4:checked ~ .tab-panels #panel-4 {
+    display: block;
+  }
+  @media (max-width: 700px) { table { font-size: 0.8rem; } th, td { padding: 6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📊 持仓监控日报</h1>
+<p class="subtitle">2026-04-12 · 数据来源：同花顺 iFinD</p>
+
+<div class="kpi-row">
+  
+  <div class="kpi">
+    <div class="label">持仓数量</div>
+    <div class="value">49</div>
+  </div>
+  <div class="kpi">
+    <div class="label">上涨</div>
+    <div class="value up">▲ 26</div>
+  </div>
+  <div class="kpi">
+    <div class="label">下跌</div>
+    <div class="value down">▼ 22</div>
+  </div>
+  <div class="kpi">
+    <div class="label">平盘</div>
+    <div class="value">0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">触发告警</div>
+    <div class="value ">0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">今日回报</div>
+    <div class="value red"
+         style="color:var(--red)">+0.627%</div>
+  </div>
+
+  <div class="kpi">
+    <div class="label">持仓数量</div>
+    <div class="value">47</div>
+  </div>
+  <div class="kpi">
+    <div class="label">上涨</div>
+    <div class="value up">▲ 28</div>
+  </div>
+  <div class="kpi">
+    <div class="label">下跌</div>
+    <div class="value down">▼ 17</div>
+  </div>
+  <div class="kpi">
+    <div class="label">平盘</div>
+    <div class="value">0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">触发告警</div>
+    <div class="value ">0</div>
+  </div>
+  <div class="kpi">
+    <div class="label">今日回报</div>
+    <div class="value red"
+         style="color:var(--red)">+0.737%</div>
+  </div>
+
+</div>
+
+<!-- Tab 切换 -->
+<input type="radio" name="portfolio-tab" id="tab-0" class="tab-input" checked><input type="radio" name="portfolio-tab" id="tab-1" class="tab-input" >
+<div class="tab-labels">
+  <label class="tab-label" for="tab-0">润铭</label>
+<label class="tab-label" for="tab-1">CIF</label>
+</div>
+<div class="tab-panels">
+  
+        <div class="tab-panel" id="panel-0">
+          <div class="contrib-total">
+            润铭 今日估算涨跌幅：
+            <span style="color:var(--red)">+0.627%</span>
+            <span class="contrib-note">（48/49 只有效数据）</span>
+          </div>
+          <div class="card">
+            <h2>持仓明细（按持仓占比排序，点击列头可重排）</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>代码</th>
+                  <th>公司名称</th>
+                  <th class="num sortable" onclick="sortTable(0, 2, this)">持仓占比<span class="sort-arrow" data-dir="desc">▼</span></th>
+                  <th class="num sortable" onclick="sortTable(0, 3, this)">今日涨跌幅<span class="sort-arrow" data-dir="desc">▼</span></th>
+                  <th class="num sortable" onclick="sortTable(0, 4, this)">组合贡献<span class="sort-arrow" data-dir="desc">▼</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-red"><td>301517.SZ</td><td>陕西华达</td><td class="num">2.01%</td><td class="num"><span class="badge-red">+10.05%</span></td><td class="num">+0.202%</td></tr>
+<tr class="row-red"><td>002384.SZ</td><td>东山精密</td><td class="num">0.17%</td><td class="num"><span class="badge-red">+8.50%</span></td><td class="num">+0.014%</td></tr>
+<tr class="row-red"><td>1304.HK</td><td>FORTIOR</td><td class="num">2.74%</td><td class="num"><span class="badge-red">+7.92%</span></td><td class="num">+0.217%</td></tr>
+<tr class="row-red-light"><td>300308.SZ</td><td>中际旭创</td><td class="num">0.67%</td><td class="num"><span class="badge-red-light">+4.95%</span></td><td class="num">+0.033%</td></tr>
+<tr class="row-red-light"><td>0981.HK</td><td>中芯国际</td><td class="num">0.32%</td><td class="num"><span class="badge-red-light">+4.58%</span></td><td class="num">+0.015%</td></tr>
+<tr class="row-red-light"><td>920438.BJ</td><td>戈碧迦</td><td class="num">15.79%</td><td class="num"><span class="badge-red-light">+3.43%</span></td><td class="num">+0.542%</td></tr>
+<tr class="row-red-light"><td>688239.SH</td><td>航宇科技</td><td class="num">4.86%</td><td class="num"><span class="badge-red-light">+3.06%</span></td><td class="num">+0.149%</td></tr>
+<tr class="row-red-light"><td>688139.SH</td><td>海尔生物</td><td class="num">0.54%</td><td class="num"><span class="badge-red-light">+2.35%</span></td><td class="num">+0.013%</td></tr>
+<tr class="row-red-light"><td>3738.HK</td><td>阜博集团</td><td class="num">8.34%</td><td class="num"><span class="badge-red-light">+2.13%</span></td><td class="num">+0.177%</td></tr>
+<tr class="row-red-light"><td>301029.SZ</td><td>怡合达</td><td class="num">0.75%</td><td class="num"><span class="badge-red-light">+2.08%</span></td><td class="num">+0.016%</td></tr>
+<tr class="row-red-light"><td>300285.SZ</td><td>国瓷材料</td><td class="num">0.31%</td><td class="num"><span class="badge-red-light">+2.05%</span></td><td class="num">+0.006%</td></tr>
+<tr class="row-red-light"><td>002463.SZ</td><td>沪电股份</td><td class="num">1.55%</td><td class="num"><span class="badge-red-light">+2.03%</span></td><td class="num">+0.032%</td></tr>
+<tr class="row-red-light"><td>1316.HK</td><td>耐世特</td><td class="num">0.73%</td><td class="num"><span class="badge-red-light">+1.86%</span></td><td class="num">+0.014%</td></tr>
+<tr class="row-red-light"><td>002595.SZ</td><td>豪迈科技</td><td class="num">0.65%</td><td class="num"><span class="badge-red-light">+1.71%</span></td><td class="num">+0.011%</td></tr>
+<tr class="row-red-light"><td>002851.SZ</td><td>麦格米特</td><td class="num">0.30%</td><td class="num"><span class="badge-red-light">+1.57%</span></td><td class="num">+0.005%</td></tr>
+<tr class="row-red-light"><td>300454.SZ</td><td>深信服</td><td class="num">6.20%</td><td class="num"><span class="badge-red-light">+1.43%</span></td><td class="num">+0.089%</td></tr>
+<tr class="row-red-light"><td>300818.SZ</td><td>耐普矿机</td><td class="num">0.91%</td><td class="num"><span class="badge-red-light">+1.29%</span></td><td class="num">+0.012%</td></tr>
+<tr class="row-red-light"><td>688041.SH</td><td>海光信息</td><td class="num">0.59%</td><td class="num"><span class="badge-red-light">+0.58%</span></td><td class="num">+0.003%</td></tr>
+<tr class="row-red-light"><td>688256.SH</td><td>寒武纪</td><td class="num">1.21%</td><td class="num"><span class="badge-red-light">+0.47%</span></td><td class="num">+0.006%</td></tr>
+<tr class="row-red-light"><td>300593.SZ</td><td>新雷能</td><td class="num">2.23%</td><td class="num"><span class="badge-red-light">+0.45%</span></td><td class="num">+0.010%</td></tr>
+<tr class="row-red-light"><td>6682.HK</td><td>范式智能</td><td class="num">4.28%</td><td class="num"><span class="badge-red-light">+0.37%</span></td><td class="num">+0.016%</td></tr>
+<tr class="row-red-light"><td>688008.SH</td><td>澜起科技</td><td class="num">0.27%</td><td class="num"><span class="badge-red-light">+0.37%</span></td><td class="num">+0.001%</td></tr>
+<tr class="row-red-light"><td>002886.SZ</td><td>沃特股份</td><td class="num">0.82%</td><td class="num"><span class="badge-red-light">+0.32%</span></td><td class="num">+0.003%</td></tr>
+<tr class="row-red-light"><td>002138.SZ</td><td>顺络电子</td><td class="num">0.36%</td><td class="num"><span class="badge-red-light">+0.23%</span></td><td class="num">+0.001%</td></tr>
+<tr class="row-red-light"><td>603893.SH</td><td>瑞芯微</td><td class="num">1.86%</td><td class="num"><span class="badge-red-light">+0.01%</span></td><td class="num">+0.000%</td></tr>
+<tr class="row-red-light"><td>688981.SH</td><td>中芯国际</td><td class="num">0.45%</td><td class="num"><span class="badge-red-light">+0.01%</span></td><td class="num">+0.000%</td></tr>
+<tr class="row-green-light"><td>300045.SZ</td><td>华力创通</td><td class="num">1.52%</td><td class="num"><span class="badge-green-light">-0.37%</span></td><td class="num">-0.006%</td></tr>
+<tr class="row-green-light"><td>301566.SZ</td><td>达利凯普</td><td class="num">0.51%</td><td class="num"><span class="badge-green-light">-0.49%</span></td><td class="num">-0.002%</td></tr>
+<tr class="row-green-light"><td>688288.SH</td><td>鸿泉技术</td><td class="num">1.53%</td><td class="num"><span class="badge-green-light">-0.56%</span></td><td class="num">-0.009%</td></tr>
+<tr class="row-green-light"><td>603063.SH</td><td>禾望电气</td><td class="num">0.84%</td><td class="num"><span class="badge-green-light">-0.58%</span></td><td class="num">-0.005%</td></tr>
+<tr class="row-green-light"><td>2556.HK</td><td>迈富时</td><td class="num">8.24%</td><td class="num"><span class="badge-green-light">-0.59%</span></td><td class="num">-0.049%</td></tr>
+<tr class="row-green-light"><td>603228.SH</td><td>景旺电子</td><td class="num">4.42%</td><td class="num"><span class="badge-green-light">-0.62%</span></td><td class="num">-0.027%</td></tr>
+<tr class="row-green-light"><td>688385.SH</td><td>复旦微电</td><td class="num">0.50%</td><td class="num"><span class="badge-green-light">-0.94%</span></td><td class="num">-0.005%</td></tr>
+<tr class="row-green-light"><td>2577.HK</td><td>英诺赛科</td><td class="num">1.63%</td><td class="num"><span class="badge-green-light">-1.02%</span></td><td class="num">-0.017%</td></tr>
+<tr class="row-green-light"><td>9992.HK</td><td>泡泡玛特</td><td class="num">1.21%</td><td class="num"><span class="badge-green-light">-1.18%</span></td><td class="num">-0.014%</td></tr>
+<tr class="row-green-light"><td>9911.HK</td><td>赤子城科技</td><td class="num">1.07%</td><td class="num"><span class="badge-green-light">-1.22%</span></td><td class="num">-0.013%</td></tr>
+<tr class="row-green-light"><td>300570.SZ</td><td>太辰光</td><td class="num">3.69%</td><td class="num"><span class="badge-green-light">-1.43%</span></td><td class="num">-0.053%</td></tr>
+<tr class="row-green-light"><td>1357.HK</td><td>美图公司</td><td class="num">7.63%</td><td class="num"><span class="badge-green-light">-1.59%</span></td><td class="num">-0.122%</td></tr>
+<tr class="row-green-light"><td>688333.SH</td><td>铂力特</td><td class="num">2.09%</td><td class="num"><span class="badge-green-light">-1.93%</span></td><td class="num">-0.040%</td></tr>
+<tr class="row-green-light"><td>688655.SH</td><td>迅捷兴</td><td class="num">3.50%</td><td class="num"><span class="badge-green-light">-2.32%</span></td><td class="num">-0.081%</td></tr>
+<tr class="row-green-light"><td>0268.HK</td><td>金蝶国际</td><td class="num">6.24%</td><td class="num"><span class="badge-green-light">-2.37%</span></td><td class="num">-0.148%</td></tr>
+<tr class="row-green-light"><td>300747.SZ</td><td>锐科激光</td><td class="num">0.43%</td><td class="num"><span class="badge-green-light">-2.76%</span></td><td class="num">-0.012%</td></tr>
+<tr class="row-green"><td>300491.SZ</td><td>通合科技</td><td class="num">1.61%</td><td class="num"><span class="badge-green">-3.16%</span></td><td class="num">-0.051%</td></tr>
+<tr class="row-green"><td>688112.SH</td><td>鼎阳科技</td><td class="num">1.71%</td><td class="num"><span class="badge-green">-3.31%</span></td><td class="num">-0.057%</td></tr>
+<tr class="row-green"><td>688387.SH</td><td>信科移动</td><td class="num">1.35%</td><td class="num"><span class="badge-green">-3.97%</span></td><td class="num">-0.054%</td></tr>
+<tr class="row-green"><td>688516.SH</td><td>奥特维</td><td class="num">0.05%</td><td class="num"><span class="badge-green">-4.16%</span></td><td class="num">-0.002%</td></tr>
+<tr class="row-green"><td>300661.SZ</td><td>圣邦股份</td><td class="num">3.94%</td><td class="num"><span class="badge-green">-4.48%</span></td><td class="num">-0.177%</td></tr>
+<tr class="row-green"><td>600487.SH</td><td>亨通光电</td><td class="num">0.31%</td><td class="num"><span class="badge-green">-5.46%</span></td><td class="num">-0.017%</td></tr>
+<tr class="row-na"><td>301486.SZ</td><td>致尚科技</td><td class="num">1.25%</td><td class="num"><span class="badge-na">N/A</span></td><td class="num">N/A</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+<div class="card">
+  <h2>触发告警</h2>
+  <div class="no-alerts">✅ 今日无告警</div>
+</div>
+        </div>
+        <div class="tab-panel" id="panel-1">
+          <div class="contrib-total">
+            CIF 今日估算涨跌幅：
+            <span style="color:var(--red)">+0.737%</span>
+            <span class="contrib-note">（45/47 只有效数据）</span>
+          </div>
+          <div class="card">
+            <h2>持仓明细（按持仓占比排序，点击列头可重排）</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>代码</th>
+                  <th>公司名称</th>
+                  <th class="num sortable" onclick="sortTable(1, 2, this)">持仓占比<span class="sort-arrow" data-dir="desc">▼</span></th>
+                  <th class="num sortable" onclick="sortTable(1, 3, this)">今日涨跌幅<span class="sort-arrow" data-dir="desc">▼</span></th>
+                  <th class="num sortable" onclick="sortTable(1, 4, this)">组合贡献<span class="sort-arrow" data-dir="desc">▼</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-red"><td>03986.HK</td><td>兆易创新</td><td class="num">1.39%</td><td class="num"><span class="badge-red">+12.06%</span></td><td class="num">+0.168%</td></tr>
+<tr class="row-red"><td>01304.HK</td><td>峰岐科技</td><td class="num">3.14%</td><td class="num"><span class="badge-red">+7.92%</span></td><td class="num">+0.249%</td></tr>
+<tr class="row-red"><td>300750.SZ</td><td>宁德时代</td><td class="num">2.64%</td><td class="num"><span class="badge-red">+5.58%</span></td><td class="num">+0.147%</td></tr>
+<tr class="row-red-light"><td>00981.HK</td><td>中芯国际</td><td class="num">1.61%</td><td class="num"><span class="badge-red-light">+4.58%</span></td><td class="num">+0.074%</td></tr>
+<tr class="row-red-light"><td>03347.HK</td><td>泰格医药</td><td class="num">1.43%</td><td class="num"><span class="badge-red-light">+3.95%</span></td><td class="num">+0.057%</td></tr>
+<tr class="row-red-light"><td>603986.SH</td><td>兆易创新</td><td class="num">0.96%</td><td class="num"><span class="badge-red-light">+3.76%</span></td><td class="num">+0.036%</td></tr>
+<tr class="row-red-light"><td>688239.SH</td><td>航宇科技</td><td class="num">5.19%</td><td class="num"><span class="badge-red-light">+3.06%</span></td><td class="num">+0.159%</td></tr>
+<tr class="row-red-light"><td>02268.HK</td><td>药明合联</td><td class="num">1.99%</td><td class="num"><span class="badge-red-light">+3.03%</span></td><td class="num">+0.060%</td></tr>
+<tr class="row-red-light"><td>603969.SH</td><td>银龙股份</td><td class="num">1.78%</td><td class="num"><span class="badge-red-light">+2.65%</span></td><td class="num">+0.047%</td></tr>
+<tr class="row-red-light"><td>00425.HK</td><td>敏实集团</td><td class="num">2.47%</td><td class="num"><span class="badge-red-light">+2.65%</span></td><td class="num">+0.065%</td></tr>
+<tr class="row-red-light"><td>688139.SH</td><td>海尔生物</td><td class="num">0.94%</td><td class="num"><span class="badge-red-light">+2.35%</span></td><td class="num">+0.022%</td></tr>
+<tr class="row-red-light"><td>00992.HK</td><td>联想集团</td><td class="num">1.44%</td><td class="num"><span class="badge-red-light">+2.33%</span></td><td class="num">+0.034%</td></tr>
+<tr class="row-red-light"><td>03738.HK</td><td>阜博集团</td><td class="num">4.35%</td><td class="num"><span class="badge-red-light">+2.13%</span></td><td class="num">+0.093%</td></tr>
+<tr class="row-red-light"><td>300285.SZ</td><td>国瓷材料</td><td class="num">1.12%</td><td class="num"><span class="badge-red-light">+2.05%</span></td><td class="num">+0.023%</td></tr>
+<tr class="row-red-light"><td>01316.HK</td><td>耐世特</td><td class="num">1.97%</td><td class="num"><span class="badge-red-light">+1.86%</span></td><td class="num">+0.037%</td></tr>
+<tr class="row-red-light"><td>002595.SZ</td><td>豪迈科技</td><td class="num">0.90%</td><td class="num"><span class="badge-red-light">+1.71%</span></td><td class="num">+0.015%</td></tr>
+<tr class="row-red-light"><td>301031.SZ</td><td>中熔电气</td><td class="num">2.59%</td><td class="num"><span class="badge-red-light">+1.33%</span></td><td class="num">+0.035%</td></tr>
+<tr class="row-red-light"><td>300818.SZ</td><td>耐普矿机</td><td class="num">2.74%</td><td class="num"><span class="badge-red-light">+1.29%</span></td><td class="num">+0.035%</td></tr>
+<tr class="row-red-light"><td>688200.SH</td><td>华峰测控</td><td class="num">2.98%</td><td class="num"><span class="badge-red-light">+1.06%</span></td><td class="num">+0.032%</td></tr>
+<tr class="row-red-light"><td>600406.SH</td><td>国电南瑞</td><td class="num">2.13%</td><td class="num"><span class="badge-red-light">+0.96%</span></td><td class="num">+0.020%</td></tr>
+<tr class="row-red-light"><td>688271.SH</td><td>联影医疗</td><td class="num">1.24%</td><td class="num"><span class="badge-red-light">+0.79%</span></td><td class="num">+0.010%</td></tr>
+<tr class="row-red-light"><td>688041.SH</td><td>海光信息</td><td class="num">1.01%</td><td class="num"><span class="badge-red-light">+0.58%</span></td><td class="num">+0.006%</td></tr>
+<tr class="row-red-light"><td>301600.SZ</td><td>蕙翰股份</td><td class="num">1.64%</td><td class="num"><span class="badge-red-light">+0.46%</span></td><td class="num">+0.008%</td></tr>
+<tr class="row-red-light"><td>06682.HK</td><td>范式智能</td><td class="num">2.60%</td><td class="num"><span class="badge-red-light">+0.37%</span></td><td class="num">+0.010%</td></tr>
+<tr class="row-red-light"><td>301536.SZ</td><td>星震科技</td><td class="num">1.07%</td><td class="num"><span class="badge-red-light">+0.35%</span></td><td class="num">+0.004%</td></tr>
+<tr class="row-red-light"><td>03888.HK</td><td>金山软件</td><td class="num">0.45%</td><td class="num"><span class="badge-red-light">+0.35%</span></td><td class="num">+0.002%</td></tr>
+<tr class="row-red-light"><td>03696.HK</td><td>英矽智能</td><td class="num">1.47%</td><td class="num"><span class="badge-red-light">+0.08%</span></td><td class="num">+0.001%</td></tr>
+<tr class="row-red-light"><td>603893.SH</td><td>瑞芯微</td><td class="num">2.70%</td><td class="num"><span class="badge-red-light">+0.01%</span></td><td class="num">+0.000%</td></tr>
+<tr class="row-green-light"><td>300487.SZ</td><td>蓝晓科技</td><td class="num">2.16%</td><td class="num"><span class="badge-green-light">-0.10%</span></td><td class="num">-0.002%</td></tr>
+<tr class="row-green-light"><td>000528.SZ</td><td>柳工</td><td class="num">0.86%</td><td class="num"><span class="badge-green-light">-0.10%</span></td><td class="num">-0.001%</td></tr>
+<tr class="row-green-light"><td>603380.SH</td><td>易德龙</td><td class="num">1.84%</td><td class="num"><span class="badge-green-light">-0.31%</span></td><td class="num">-0.006%</td></tr>
+<tr class="row-green-light"><td>301566.SZ</td><td>达利凯普</td><td class="num">2.42%</td><td class="num"><span class="badge-green-light">-0.49%</span></td><td class="num">-0.012%</td></tr>
+<tr class="row-green-light"><td>02556.HK</td><td>迈富时</td><td class="num">2.35%</td><td class="num"><span class="badge-green-light">-0.59%</span></td><td class="num">-0.014%</td></tr>
+<tr class="row-green-light"><td>688385.SH</td><td>上海复旦</td><td class="num">0.88%</td><td class="num"><span class="badge-green-light">-0.94%</span></td><td class="num">-0.008%</td></tr>
+<tr class="row-green-light"><td>688401.SH</td><td>路维光电</td><td class="num">3.02%</td><td class="num"><span class="badge-green-light">-0.97%</span></td><td class="num">-0.029%</td></tr>
+<tr class="row-green-light"><td>02577.HK</td><td>英诺赛科</td><td class="num">1.81%</td><td class="num"><span class="badge-green-light">-1.02%</span></td><td class="num">-0.018%</td></tr>
+<tr class="row-green-light"><td>300790.SZ</td><td>宇瞳光学</td><td class="num">1.21%</td><td class="num"><span class="badge-green-light">-1.19%</span></td><td class="num">-0.014%</td></tr>
+<tr class="row-green-light"><td>09911.HK</td><td>赤子城科技</td><td class="num">1.05%</td><td class="num"><span class="badge-green-light">-1.22%</span></td><td class="num">-0.013%</td></tr>
+<tr class="row-green-light"><td>01357.HK</td><td>美图公司</td><td class="num">3.17%</td><td class="num"><span class="badge-green-light">-1.59%</span></td><td class="num">-0.051%</td></tr>
+<tr class="row-green-light"><td>688333.SH</td><td>铂力特</td><td class="num">2.59%</td><td class="num"><span class="badge-green-light">-1.93%</span></td><td class="num">-0.050%</td></tr>
+<tr class="row-green-light"><td>688099.SH</td><td>晶晨股份</td><td class="num">2.39%</td><td class="num"><span class="badge-green-light">-2.17%</span></td><td class="num">-0.052%</td></tr>
+<tr class="row-green-light"><td>300776.SZ</td><td>帝尔激光</td><td class="num">0.40%</td><td class="num"><span class="badge-green-light">-2.23%</span></td><td class="num">-0.009%</td></tr>
+<tr class="row-green-light"><td>688655.SH</td><td>迅捷兴</td><td class="num">4.13%</td><td class="num"><span class="badge-green-light">-2.32%</span></td><td class="num">-0.096%</td></tr>
+<tr class="row-green-light"><td>00268.HK</td><td>金蝶国际</td><td class="num">1.53%</td><td class="num"><span class="badge-green-light">-2.37%</span></td><td class="num">-0.036%</td></tr>
+<tr class="row-green"><td>300661.SZ</td><td>圣邦股份</td><td class="num">6.65%</td><td class="num"><span class="badge-green">-4.48%</span></td><td class="num">-0.298%</td></tr>
+<tr class="row-na"><td>BABA.N</td><td>阿里巴巴</td><td class="num">0.99%</td><td class="num"><span class="badge-na">N/A</span></td><td class="num">N/A</td></tr>
+<tr class="row-na"><td>RERE.N</td><td>万物新生</td><td class="num">0.76%</td><td class="num"><span class="badge-na">N/A</span></td><td class="num">N/A</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+<div class="card">
+  <h2>触发告警</h2>
+  <div class="no-alerts">✅ 今日无告警</div>
+</div>
+        </div>
+</div>
+
+<div class="footer">
+  由 rl-portfolio-monitor 生成 · 2026-04-12 15:47:19
+</div>
+</div>
+<script>
+// 排序状态: 每个 Tab 每列的排序方向
+const sortState = {};
+
+function sortTable(tabIdx, colIdx, thEl) {
+  const panel = document.getElementById('panel-' + tabIdx);
+  const table = panel.querySelector('table');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  if (!sortState[tabIdx]) sortState[tabIdx] = {};
+  const colState = sortState[tabIdx][colIdx];
+  const asc = colState ? !colState.asc : true;
+  sortState[tabIdx][colIdx] = { asc: asc };
+
+  const allThs = table.querySelectorAll('th.sortable .sort-arrow');
+  allThs.forEach(s => s.textContent = '');
+  thEl.querySelector('.sort-arrow').textContent = asc ? '▲' : '▼';
+
+  rows.sort((a, b) => {
+    const aVal = a.children[colIdx].textContent.trim();
+    const bVal = b.children[colIdx].textContent.trim();
+    if (aVal === 'N/A' && bVal !== 'N/A') return 1;
+    if (aVal !== 'N/A' && bVal === 'N/A') return -1;
+    const aNum = parseFloat(aVal.replace(/[+%]/g, ''));
+    const bNum = parseFloat(bVal.replace(/[+%]/g, ''));
+    if (isNaN(aNum) || isNaN(bNum)) return aVal.localeCompare(bVal, 'zh');
+    return asc ? aNum - bNum : bNum - aNum;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+</script>
+</body>
+</html>
