@@ -2,10 +2,10 @@
 name: rl-radar-agent
 description: 投研系统雷达Agent — 多数据源信息收集层。当用户说"投研 [公司]"、研究 [公司]、分析 [公司]、雷达 [公司]、或启动投研任务时，Lead Agent会先调用本Agent预先收集目标公司的外部数据（财报/研报/纪要/宏观/行业），为后续Agent提供数据支撑。本Agent为被动响应模式，随投研任务启动。
 metadata:
-    version: 1.6
+    version: 1.8
     type: data-collection-agent
     position: 前置数据收集层
-    data_sources: alphapai-research, iFind, rabyte, 本地文件, 港交所披露, portfolio-monitor
+    data_sources: alphapai-research, iFind, rabyte, 本地文件, listed-company-reports skill
 ---
 
 # rl-radar-agent — 投研系统雷达Agent
@@ -34,6 +34,31 @@ Lead Agent 调用 雷达Agent（被动响应）
 6. **本地文件核查** — 扫描Research目录已有文件
 
 ## 执行流程
+
+### Step 0：工具可用性检查（v1.7新增，启动即执行）
+
+**每次雷达Agent启动时，首先检查以下工具是否可用，避免执行中途发现工具不可用导致数据缺失：**
+
+```bash
+# 1. 财报下载技能（listed-company-reports）
+ls ~/.claude/skills/listed-company-reports/SKILL.md
+
+# 2. AlphaPai 客户端
+ls ~/.claude/skills/alphapai-research/scripts/alphapai_client.py
+
+# 3. AlphaPai API Key（config.json）
+cat ~/.claude/skills/alphapai-research/config.json | grep api_key
+```
+
+**降级策略：**
+| 工具缺失 | 降级方案 |
+|---------|---------|
+| `listed-company-reports` skill 不存在 | 标记"⚠️ 财报下载技能缺失"，跳过PDF下载，继续其他数据收集 |
+| `alphapai_client.py` 不存在 | 标记"⚠️ AlphaPai客户端缺失"，用 iFind/妙想 替代公告+舆情 |
+| AlphaPai API Key 缺失/无效 | 跳过所有 AlphaPai 调用，用 iFind search_news + search_notice 替代 |
+| 全部正常 | 全量数据收集 |
+
+检查结果在最终输出报告的"数据质量评估"中标注。
 
 ### Step 1：解析公司信息
 
@@ -71,27 +96,66 @@ Lead Agent 调用 雷达Agent（被动响应）
    | 季报 | 近四期（Q1-Q4 2025） | 从公司官网下载 |
    | 研报 | 券商研报、公司介绍等 | 标记缺失，记录需要补全 |
 
-3. **补全缺失资料**
-   - **港股（HK后缀）**：优先从**公司官网**下载（HKEX API经常改版失败）
-     - 例：中芯国际(00981.HK) → `https://www.smics.com/en/site/company_financialSummary`
-     - 年报/中报PDF通常在 `?year=YYYY` 参数页面可找到
-     - 季度财务展示(Financials Presentation)通常在各季度页面
-     - **HKEX自动下载**：`download_reports_v2.py` 的 RSS feed 已多次失败，备用公司官网
-   - **A股（SH/SZ后缀）**：
-     - 科创板(688xxx)：从上交所科创板平台获取，CNINFO不支持
-     - 主板：从CNINFO(巨潮)下载
-     - 创业板：CNINFO下载
-   - 所有补充下载的文件存入：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/`
+3. **补全缺失资料（使用 listed-company-reports skill）**
 
-4. **存储AlphaPai收集结果**
+   调用 `listed-company-reports` skill 下载缺失财报PDF：
+
+   **Skill 路径**：`~/.claude/skills/listed-company-reports/SKILL.md`
+
+   **工作流程**（按 skill 定义执行）：
+   - **A股**：巨潮资讯网(cninfo) → 东方财富(备选)
+   - **港股**：披露易(hkexnews) → 公司官网投资者关系页(备选)
+   - **美股**：SEC EDGAR
+
+   下载完成后验证文件是否存入：
+   ```
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/年报/
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/半年报/
+   ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/季报/
+   ```
+   如 skill 下载失败，降级到公司官网投资者关系页手动搜索，并在报告中标注"⚠️ 财报PDF下载失败，待补全"。
+
+4. **存储AlphaPai收集结果（使用可执行脚本）**
    - 新建文件夹：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/`
+   - 使用以下**精确命令**调用 AlphaPai（**不可用伪命令**）：
+
+   ```bash
+   # 路演纪要（自动下载TXT到alphapai/目录）
+   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript \
+     --query "{公司名} {股票代码}" \
+     --path-prefix "11_公司列表/{拼音首字母}/{公司名}_{代码}" \
+     --start $(date -v-3m +%Y-%m-%d) \
+     --end $(date +%Y-%m-%d)
+
+   # 研报摘要
+   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall \
+     --query "{公司名}" --type report --no-cutoff \
+     --start $(date -v-6m +%Y-%m-%d) \
+     --end $(date +%Y-%m-%d) > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/研报摘要_$(date +%Y%m%d).md
+
+   # 公告列表
+   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {股票代码} \
+     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/公告列表_$(date +%Y%m%d).md
+
+   # 公司一页纸（快速概览）
+   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 \
+     --stock "{股票代码}:{公司名}" \
+     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/公司一页纸_$(date +%Y%m%d).md
+
+   # 舆情热点
+   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa \
+     --question "{公司名}近期有什么重大消息？近期股价走势和催化剂？" --mode Think \
+     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/舆情热点_$(date +%Y%m%d).md
+   ```
+
    - 存入内容：
      ```
      alphapai/
-     ├── 路演纪要_{日期}.md       ← AlphaPai recall --type roadShow
-     ├── 研报摘要_{日期}.md       ← AlphaPai recall --type report
-     ├── 舆情热点_{日期}.md       ← AlphaPai qa
-     └── 公司一页纸_{日期}.md     ← AlphaPai agent --mode 2
+     ├── 路演纪要_{日期}.txt       ← transcript 命令自动保存
+     ├── 研报摘要_{日期}.md       ← recall --type report
+     ├── 公告列表_{日期}.md       ← report
+     ├── 舆情热点_{日期}.md       ← qa --mode Think
+     └── 公司一页纸_{日期}.md     ← agent --mode 2
      ```
 
 ### Step 2：数据源优先级
@@ -109,11 +173,12 @@ Lead Agent 调用 雷达Agent（被动响应）
   → get_stock_info + get_stock_summary：公司基本信息
   → get_edb_data + search_edb：宏观/行业数据
 
-优先级 3：AlphaPai API
-  → agent --mode 2：公司一页纸（快速概览）
-  → recall --type roadShow,report,comment：路演纪要+研报+点评
-  → qa --question "{公司}近期有什么重大消息？"
-  → report --code {代码}：最新公告列表
+优先级 3：AlphaPai API（使用真实脚本路径）
+  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --stock "{代码}:{公司}"`
+  → 路演纪要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-3m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
+  → 研报摘要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司}" --type report --no-cutoff`
+  → 公告列表：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {代码}`
+  → 舆情热点：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa --question "{公司}近期有什么重大消息？" --mode Think`
 
 优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
   → 财务数据、行情估值、公司信息、宏观数据：
@@ -124,6 +189,14 @@ Lead Agent 调用 雷达Agent（被动响应）
 
 优先级 4：iFind新闻
   → search_news：最新新闻舆情
+
+优先级 4.5：新浪财经（仅实时股价兜底，新增）
+  → 仅当 iFind/妙想/AlphaPai 均无法获取实时股价时启用
+  → 脚本：`python3 ~/.claude/skills/sina-stock-price/fetch_price.py --code {股票代码}`
+  → 返回：price（当前价）、change_pct（涨跌幅%）、yesterday_close、volume
+  → 港股格式：0268.HK → `--code 0268.HK`（脚本自动补零到5位）
+  → A股格式：688981.SH → `--code 688981.SH`
+  → ⚠️ 仅提供实时价格，不含历史/财报/研报/宏观数据
 
 优先级 5：网络搜索（兜底）
   → 仅在其他途径均无结果时使用
@@ -142,10 +215,11 @@ Lead Agent 调用 雷达Agent（被动响应）
   → get_stock_info：公司基本信息
   → search_news：最新新闻舆情
 
-优先级 3：AlphaPai API
-  → agent --mode 2：公司一页纸（快速概览）
-  → recall --type roadShow,report,comment：路演纪要+研报+点评
-  → qa --question "{公司}近期有什么重大消息？"
+优先级 3：AlphaPai API（使用真实脚本路径）
+  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --stock "{代码}:{公司}"`
+  → 路演纪要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-3m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
+  → 研报摘要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司}" --type report --no-cutoff`
+  → 舆情热点：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa --question "{公司}近期有什么重大消息？" --mode Think`
 
 优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
   → 财务数据、行情估值：
@@ -155,6 +229,12 @@ Lead Agent 调用 雷达Agent（被动响应）
 优先级 4：港交所披露（补充）
   → https://www.hkexnews.hk/ 搜索最新年报/中报PDF
   → 下载PDF存入Vault_公司基本面Agent对应文件夹
+
+优先级 4.5：新浪财经（仅实时股价兜底，新增）
+  → 仅当 iFind/妙想/AlphaPai 均无法获取实时股价时启用
+  → 脚本：`python3 ~/.claude/skills/sina-stock-price/fetch_price.py --code {股票代码}`
+  → 港股代码自动补零：0268.HK → hk00268（脚本内部处理）
+  → ⚠️ 仅提供实时价格，不含历史/财报/研报/宏观数据
 
 优先级 5：网络搜索（兜底）
   → 仅在其他途径均无结果时使用
@@ -485,30 +565,37 @@ get_stock_performance({
 }
 ```
 
-## 港交所披露查询
+## 财报PDF下载（listed-company-reports skill）
 
 港股财务数据主要来源：
 
-1. **公司官网下载（首选，HKEX API经常失败）**
+1. **公司官网投资者关系页（首选）**
+   - 金蝶国际(0268.HK)案例：`https://investor.kingdee.com/en/finance/reports/`
    - 中芯国际(00981.HK)案例：`https://www.smics.com/en/site/company_financialSummary`
-   - 通过 `?year=YYYY` 参数获取各年份年报/中报
-   - 季报展示(Financials Presentation)在季度页面可找到PDF/XLSX
+   - 通过公司官网获取年报/中报PDF链接，直接curl下载
 
 2. **港交所披露易（备用，API已多次改版失败）**
-   - https://www.hkexnews.hk/ — 旧RSS API (`smarthttp/1/rss/reports/`) 返回503
-   - 下载脚本 `download_reports_v2.py` 的HKEX RSS功能已不可用
-   - 搜索公司最新年报/中报：使用公司官网 > HKEX搜索页 > HKEX API
+   - https://www.hkexnews.hk/ — 旧RSS API (`smarthttp/1/rss/reports/`) 返回404/503
+   - 搜索页面也经过多次改版，JS动态加载，爬虫难度大
+   - 建议：公司官网 > 披露易搜索
 
-3. **下载后存储位置**：
+3. **调用方式**：使用 `listed-company-reports` skill
+   - Skill 路径：`~/.claude/skills/listed-company-reports/SKILL.md`
+   - 支持A股/港股/美股，自动识别市场并选择数据源
+   - 下载后自动存入标准目录结构
+
+4. **下载后存储位置**：
    ```
    ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/年报/
    ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/半年报/
    ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/季报/
    ```
 
-4. **港股年报下载实测记录**
+5. **港股年报下载实测记录**
    | 股票 | 下载方式 | 状态 |
    |------|---------|------|
+   | 金蝶国际(0268.HK) | investor.kingdee.com官网 | ✅ 成功 |
+   | 金蝶国际(0268.HK) | HKEX RSS API | ❌ 404错误 |
    | 中芯国际(00981.HK) | smics.com官网 | ✅ 成功 |
    | 中芯国际(00981.HK) | HKEX RSS API | ❌ 503错误 |
    | 中芯国际(00981.HK) | HKEX搜索页 | ❌ 页面改版 |
@@ -520,6 +607,7 @@ get_stock_performance({
 |---------|---------|
 | iFind MCP + 备用脚本均限流/失效 | 切换到东方财富妙想（mx_api.py） |
 | 妙想 API 也限流（每日上限） | 切换到 AlphaPai 作为主要数据源 |
+| 实时股价无法获取（iFind/妙想/AlphaPai均失效） | 降级到新浪财经（fetch_price.py），仅获取实时价格 |
 | iFind港股财务数据为空 | 降级到港交所披露 + AlphaPai |
 | AlphaPai API Key缺失 | 降级到iFind/妙想 + 本地文件 |
 | 本地文件不存在 | 跳过，继续其他数据源 |
@@ -558,6 +646,6 @@ get_stock_performance({
 
 ---
 
-*版本：v1.6 | 2026-04-11*
-*数据源：alphapai-research + iFind MCP + 东方财富妙想 + rabyte + 本地文件 + 港交所披露*
-*核心变更：v1.6 新增财报PDF强制下载规则，修复"数据源短路"问题*
+*版本：v1.9 | 2026-04-13*
+*数据源：alphapai-research + iFind MCP + 东方财富妙想 + rabyte + 本地文件 + listed-company-reports skill + sina-stock-price*
+*核心变更：v1.9 新增新浪财经作为实时股价兜底数据源；v1.8 废弃 download_reports_v2.py（HKEX RSS已死），改用 listed-company-reports skill*
