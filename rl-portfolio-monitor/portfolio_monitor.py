@@ -429,7 +429,7 @@ def _build_table_rows_html(all_perf_data: list[dict], triggered_alerts: list[dic
     sorted_rows = sorted(data_rows, key=lambda x: x["change_pct"], reverse=True) + na_rows
 
     perf_rows_html = "\n".join(
-        f'<tr class="{r["row_class"]}">'
+        f'<tr class="{r["row_class"]}" data-code="{r["code"]}">'
         f'<td>{r["code"]}</td>'
         f'<td>{r["name"]}</td>'
         f'<td class="num">{r["position_pct"]:.2f}%</td>'
@@ -638,6 +638,23 @@ def generate_multi_portfolio_html(
   #tab-4:checked ~ .tab-panels #panel-4 {{
     display: block;
   }}
+  /* 刷新按钮 */
+  .refresh-bar {{ display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }}
+  .btn {{
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; color: white;
+  }}
+  .btn:active {{ transform: scale(0.97); }}
+  .btn:disabled {{ opacity: 0.5; cursor: not-allowed; transform: none; }}
+  .btn-price {{ background: var(--accent); }}
+  .btn-price:hover:not(:disabled) {{ background: #2563eb; }}
+  .btn-alert {{ background: #f59e0b; }}
+  .btn-alert:hover:not(:disabled) {{ background: #d97706; }}
+  .btn-ann {{ background: #8b5cf6; }}
+  .btn-ann:hover:not(:disabled) {{ background: #7c3aed; }}
+  .refresh-tip {{ font-size: 0.75rem; color: var(--text-muted); }}
   @media (max-width: 700px) {{ table {{ font-size: 0.8rem; }} th, td {{ padding: 6px 8px; }} }}
 </style>
 </head>
@@ -649,6 +666,14 @@ def generate_multi_portfolio_html(
 
 <div class="kpi-row">
   {all_kpi_html}
+</div>
+
+<!-- 刷新按钮 -->
+<div class="refresh-bar">
+  <button class="btn btn-price" onclick="location.reload()">📈 股价刷新</button>
+  <button class="btn btn-alert" onclick="location.reload()">🔔 告警刷新</button>
+  <button class="btn btn-ann" onclick="location.reload()">📋 公告刷新</button>
+  <span class="refresh-tip">点击按钮重新扫描持仓</span>
 </div>
 
 <!-- Tab 切换 -->
@@ -722,15 +747,15 @@ def generate_interactive_multi_html(
     time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     portfolio_names = list(portfolio_results.keys())
 
-    # ── 头部 KPI：所有组合并排 ──
-    all_kpi_html = ""
+    # ── 头部 KPI：每个组合单独一行 ──
+    kpi_rows_html = ""
     contribs = {}
     for name in portfolio_names:
         result = portfolio_results[name]
         kpi_html, contrib = _build_portfolio_kpi_html(
             name, result["perf_data"], result["alerts"]
         )
-        all_kpi_html += kpi_html
+        kpi_rows_html += f'<div class="kpi-row">{kpi_html}</div>'
         contribs[name] = contrib
 
     # ── 构建每个 Tab 的表格行 ──
@@ -946,9 +971,7 @@ def generate_interactive_multi_html(
   <span class="refresh-info" id="refresh-info">最后刷新：尚未刷新</span>
 </div>
 
-<div class="kpi-row">
-  {all_kpi_html}
-</div>
+{kpi_rows_html}
 
 <!-- Tab 切换 -->
 {tabs_html}
@@ -2149,9 +2172,9 @@ def _fetch_price_sina(code: str) -> dict:
                 "volume_ratio": 0,
             }
         elif market == "BJ":
-            # 北交所: 格式同A股
+            # 北交所: 格式同A股但字段顺序不同（fields[1]=今开, fields[2]=昨收）
             price = float(fields[3])
-            yesterday = float(fields[1])
+            yesterday = float(fields[2])
             if price <= 0 or yesterday <= 0:
                 return {}
             change_pct = round((price - yesterday) / yesterday * 100, 4)
@@ -2170,7 +2193,20 @@ def _fetch_price_sina(code: str) -> dict:
 # ============================================================================
 
 def fetch_performance(code: str, name: str = "") -> dict:
-    """获取股票行情数据（通过API返回的涨跌幅/收盘价计算）"""
+    """获取股票行情数据
+
+    A股/北交所优先使用新浪实时行情（免费无限制、数据准确），
+    港股使用 ifind API。
+    """
+    # A股/北交所 → 新浪优先（实时、准确、无限流）
+    parts = code.split(".")
+    market = parts[1] if len(parts) > 1 else ""
+    if market in ("SZ", "SH", "BJ"):
+        sina_result = _fetch_price_sina(code)
+        if sina_result:
+            return sina_result
+
+    # 港股 / 新浪失败 → 使用 ifind
     norm_code = _normalize_code(code)
     result = call_ifind_api(
         "stock",
@@ -3014,7 +3050,9 @@ def run_scan_for_portfolio(
                     portfolio=portfolio_name,
                 )
                 ok = send_to_feishu(msg)
-                print(f"    {'\u2713' if ok else '\u2717'} {alert['type']} 告警{'已推送飞书' if ok else '推送失败'}")
+                tick = "\u2713" if ok else "\u2717"
+                status = "已推送飞书" if ok else "推送失败"
+                print(f"    {tick} {alert['type']} 告警{status}")
 
     # 打印组合汇总表
     if all_perf_data:

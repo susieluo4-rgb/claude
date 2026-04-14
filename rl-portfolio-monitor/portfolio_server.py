@@ -17,12 +17,14 @@ import sys
 import time
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import socketserver
 
-class ReusableTCPServer(socketserver.TCPServer):
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
+    daemon_threads = True
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -190,6 +192,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             html = f.read()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
         self.end_headers()
         self.wfile.write(html.encode("utf-8"))
 
@@ -343,14 +346,18 @@ def run_server(host="0.0.0.0", port=8765):
     print(f"持仓监控服务已启动：http://127.0.0.1:{port}")
     print(f"共 {len(_portfolios)} 个组合，{total} 只持仓")
 
-    # 同步初始加载，确保页面打开时已有数据
-    global _last_refresh_time
-    print("初始加载持仓价格数据...")
-    _refresh_all_prices()
-    _last_refresh_time = time.strftime("%Y-%m-%d %H:%M:%S")
-    print("初始加载完成")
+    # 先启动服务器，后台异步加载初始数据
+    server = ThreadedHTTPServer((host, port), PortfolioHandler)
 
-    server = ReusableTCPServer((host, port), PortfolioHandler)
+    global _last_refresh_time
+    print("后台加载持仓价格数据...")
+    def _init_load():
+        global _last_refresh_time
+        _refresh_all_prices()
+        _last_refresh_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        print("初始加载完成")
+    threading.Thread(target=_init_load, daemon=True).start()
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
