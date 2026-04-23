@@ -1,18 +1,19 @@
 ---
-name: RL-系统录入自动化 v1.5
-description: 将 ESG / Industry / Porter / QL&RF 四个 TXT 分析报告自动填入打分模板 Excel 的自动化脚本。支持多格式自动识别、通用行业Block解析、QL表格智能解析。最多支持5个行业。
+name: rl-system-auto-fill
+description: 将 ESG / Industry / Porter / QL&RF 四个 TXT 分析报告自动填入打分模板 Excel 的自动化脚本。支持多格式自动识别、通用行业Block解析、QL表格智能解析。最多支持5个行业。触发后自动扫描 新增/ 目录，批量处理所有公司。
 metadata:
-  version: "1.5"
-  last_updated: "2026-04-05"
+  version: "1.6"
+  last_updated: "2026-04-23"
   notes: |
+    v1.6: 新增自动扫描模式——Skill触发时自动检查 新增/ 目录，有公司则自动运行batch_score.py，完成后移动到 已完成/。
     v1.5: 通用化改造——支持不同公司TXT格式差异，QL解析改为表格直接提取，
     移除硬编码ql_i_map，ql_en_comment_map由ql_table_data动态生成。
     v1.4: 支持最多5个行业。
 ---
 
-# 系统录入自动化 Skill v1.5
+# 系统录入自动化 Skill v1.6
 
-将四个 TXT 源文件中的分数、数值、评论文字填入打分模板 Excel（`打分—新V 2.1.3.xlsx`），输出为 `打分—新V 2.1.3_自动填充.xlsx`。
+将四个 TXT 源文件中的分数、数值、评论文字填入打分模板 Excel（`打分—新V 2.1.3.xlsx`），输出为 `生成/{公司名}_打分.xlsx`。
 
 ---
 
@@ -36,6 +37,34 @@ grep -n "###\|风险点\|^\|" "$BASE/QL&RF" | head -20
 
 # 2. 检查TXT文件中是否有残留旧公司数据（如"云南锗业"、"002428"）
 grep -c "云南锗业\|002428" "$BASE/ESG" "$BASE/Industry" "$BASE/Portet Model" "$BASE/QL&RF"
+```
+
+---
+
+## 一、自动化流程
+
+```
+新增/{公司名}/          batch_score.py          生成/{公司名}_打分.xlsx
+├── ESG - xxx.txt  ──→  自动扫描新增/  ──→      └── 已完成/{公司名}/（自动归档）
+├── Industry - xxx.txt
+├── Portet Model - xxx.txt
+└── QL&RF - xxx.txt
+```
+
+**触发方式**：说"RL-系统录入自动化"或"自动化录入"即触发，Skill 加载时自动：
+1. 检查 `新增/` 目录下是否有公司文件夹
+2. 如有，自动运行 `batch_score.py` 批量处理
+3. 每家公司处理成功后，自动发送带附件邮件至 `rocky.luo@binyuancapital.com`
+4. 成功后自动将公司文件夹移至 `已完成/`
+
+**目录结构**：
+```
+自动化 测试/
+├── 新增/            ← 放入待处理公司文件夹
+├── 已完成/           ← 处理完成后自动归档
+├── 生成/            ← Excel 输出目录
+├── auto_fill_score.py   ← 单公司处理脚本
+└── batch_score.py       ← 批量调度脚本（自动扫描新增/）
 ```
 
 ---
@@ -445,7 +474,10 @@ for r in wb.active.iter_rows():
 
 ```bash
 cd "/Users/zhuang225/Research/自动化 测试"
-SCORE_ESG="ESG" SCORE_IND="Industry" SCORE_PORT="Portet Model" SCORE_QL="QL&RF" python3 auto_fill_score.py
+python3 batch_score.py   # 自动扫描新增/ → 处理 → 发邮件 → 归档
 ```
 
-输出：`打分—新V 2.1.3_自动填充.xlsx`
+**邮件发送**：每家公司处理完成后，自动通过 QQ 邮箱 SMTP 发送带附件邮件至 `rocky.luo@binyuancapital.com`。
+凭证从 `~/.claude/skills/qq-email/config.json` 自动读取，无需手动填入脚本。
+
+输出：`生成/{公司名}_打分.xlsx`
