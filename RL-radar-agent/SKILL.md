@@ -1,11 +1,11 @@
 ---
 name: rl-radar-agent
-description: 投研系统雷达Agent — 多数据源信息收集层。当用户说"投研 [公司]"、研究 [公司]、分析 [公司]、雷达 [公司]、或启动投研任务时，Lead Agent会先调用本Agent预先收集目标公司的外部数据（财报/研报/纪要/宏观/行业），为后续Agent提供数据支撑。本Agent为被动响应模式，随投研任务启动。
+description: 投研系统雷达Agent — 多数据源信息收集层 + 全自动被动监控层。当用户说"投研 [公司]"、研究 [公司]、分析 [公司]、雷达 [公司]、或启动投研任务时，Lead Agent会先调用本Agent预先收集目标公司的外部数据（财报/研报/纪要/宏观/行业），为后续Agent提供数据支撑。同时本Agent支持全自动被动监控模式（Cron定时触发），无需用户指令即可完成每日增量扫描 + iFinD邮件扫描 + Wiki增量更新。
 metadata:
-    version: 1.8
+    version: 1.15
     type: data-collection-agent
-    position: 前置数据收集层
-    data_sources: alphapai-research, iFind, rabyte, 本地文件, listed-company-reports skill
+    position: 前置数据收集层 + 全自动被动监控层
+    data_sources: alphapai-research, iFind, 本地文件, listed-company-reports skill, iFind邮件订阅(QQ邮箱)
 ---
 
 # rl-radar-agent — 投研系统雷达Agent
@@ -30,10 +30,55 @@ Lead Agent 调用 雷达Agent（被动响应）
 2. **研报与纪要检索** — AlphaPai recall路演纪要、券商研报
 3. **公告监控** — AlphaPai report + iFind新闻
 4. **宏观/行业数据** — iFind EDB宏观指标、行业数据
-5. **舆情与热点** — AlphaPai qa/recall + rabyte个股热搜
+5. **舆情与热点** — AlphaPai qa/recall
 6. **本地文件核查** — 扫描Research目录已有文件
 
 ## 执行流程
+
+### 执行模式
+
+本 Agent 有两种执行模式：
+
+| 模式 | 触发方式 | 说明 |
+|------|---------|------|
+| **主动模式** | 用户/Lead Agent 调用 | 针对特定公司收集数据，投研任务前置 |
+| **被动/定时模式** | Cron 定时触发 | 全自动扫描持仓公司增量，无需用户指令 |
+
+**定时模式脚本：**
+- `incremental_scan.py` — 工作日 08:30 执行，扫描 AlphaPai + Rabyte
+- `email_incremental_scan.py` — 每小时执行，拉取 iFinD 邮件推送
+
+### 报告反馈机制（v1.11新增）
+
+所有雷达 Agent 脚本跑完后统一输出报告，包含：
+- **文件清单**：处理了哪些文件
+- **处理结果**：重大事件数、一般增量数、保存文件数
+- **待确认事项**：如有重大事件需用户确认
+
+**报告输出方式：**
+
+| 触发类型 | stdout（Claude Code 对话框） | SMTP 邮件 |
+|---------|---------------------------|---------|
+| 手动触发（无 `--no-email`） | ✅ | ✅ |
+| 手动触发（带 `--no-email`） | ✅ | ❌ |
+| Cron 自动触发 | ❌（写入日志） | ✅ |
+| 干跑（`--dry-run`） | ✅（仅 stdout） | ❌ |
+
+**统一报告格式：**
+```json
+{
+  "scan_type": "email_incremental_scan",
+  "timestamp": "2026-04-18 22:00",
+  "summary": {"ifind_emails": 3, "saved_files": 5},
+  "files": [{"path": "raw/announcements/xxx.md", "action": "saved"}],
+  "errors": [],
+  "next_actions": []
+}
+```
+
+**脚本新增参数：**
+- `--no-email`：手动触发时不发邮件，仅输出到对话框
+- `--dry-run`：仅打印，不保存文件也不发邮件
 
 ### Step 0：工具可用性检查（v1.7新增，启动即执行）
 
@@ -96,7 +141,51 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
    | 季报 | 近四期（Q1-Q4 2025） | 从公司官网下载 |
    | 研报 | 券商研报、公司介绍等 | 标记缺失，记录需要补全 |
 
-3. **补全缺失资料（使用 listed-company-reports skill）**
+3. **【新增】财报数量完整性检查 — Gate 检查**
+   > 要求：年报≥5份，半年报≥5份，季报≥6份，合计≥16份
+   > 阈值：合计 < 10份 → 触发 listed-company-reports 下载
+   > 下载后仍不足 → 弹窗确认用户是否继续
+
+   ```bash
+   VAULT_BASE=~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}
+   ANNUAL_DIR="$VAULT_BASE/年报"
+   HALF_DIR="$VAULT_BASE/半年报"
+   QUARTER_DIR="$VAULT_BASE/季报"
+
+   count_reports() {
+     find "$1" \( -name "*.pdf" -o -name "*.PDF" \) 2>/dev/null | wc -l | tr -d ' '
+   }
+
+   ANNUAL_COUNT=$(count_reports "$ANNUAL_DIR")
+   HALF_COUNT=$(count_reports "$HALF_DIR")
+   QUARTER_COUNT=$(count_reports "$QUARTER_DIR")
+   TOTAL=$((ANNUAL_COUNT + HALF_COUNT + QUARTER_COUNT))
+
+   echo "📂 财报完整性检查：年报=$ANNUAL_COUNT 半年报=$HALF_COUNT 季报=$QUARTER_COUNT (合计=$TOTAL/16)"
+
+   if [ "$TOTAL" -lt 10 ]; then
+     echo "⚠️ 财报不足（$TOTAL/16），触发 listed-company-reports 下载..."
+     # 调用 listed-company-reports skill（见下方执行方式）
+     # 下载完成后重新计数
+     ANNUAL_COUNT_AFTER=$(count_reports "$ANNUAL_DIR")
+     HALF_COUNT_AFTER=$(count_reports "$HALF_DIR")
+     QUARTER_COUNT_AFTER=$(count_reports "$QUARTER_DIR")
+     TOTAL_AFTER=$((ANNUAL_COUNT_AFTER + HALF_COUNT_AFTER + QUARTER_COUNT_AFTER))
+
+     if [ "$TOTAL_AFTER" -lt 10 ]; then
+       echo "❌ 下载后仍不足（$TOTAL_AFTER/16）"
+       # 弹窗确认：AskUserQuestion "财报文件不足（$TOTAL_AFTER/16），是否继续投研？"
+       # - 继续：写入 checkpoint 标注 warn，继续
+       # - 取消：停止任务
+     else
+       echo "✅ 下载完成（$TOTAL_AFTER/16）"
+     fi
+   else
+     echo "✅ 财报数量充足（$TOTAL/16），继续"
+   fi
+   ```
+
+4. **补全缺失资料（使用 listed-company-reports skill）**
 
    调用 `listed-company-reports` skill 下载缺失财报PDF：
 
@@ -115,48 +204,124 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
    ```
    如 skill 下载失败，降级到公司官网投资者关系页手动搜索，并在报告中标注"⚠️ 财报PDF下载失败，待补全"。
 
-4. **存储AlphaPai收集结果（使用可执行脚本）**
+5. **存储AlphaPai收集结果（强制执行步骤）**
+   - **必须执行，不得跳过**。若 AlphaPai API 失败，静默跳过后续 Agent 导致数据不完整，比 API 失败更严重。
    - 新建文件夹：`~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/`
-   - 使用以下**精确命令**调用 AlphaPai（**不可用伪命令**）：
 
-   ```bash
-   # 路演纪要（自动下载TXT到alphapai/目录）
-   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript \
-     --query "{公司名} {股票代码}" \
-     --path-prefix "11_公司列表/{拼音首字母}/{公司名}_{代码}" \
-     --start $(date -v-3m +%Y-%m-%d) \
-     --end $(date +%Y-%m-%d)
-
-   # 研报摘要
-   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall \
-     --query "{公司名}" --type report --no-cutoff \
-     --start $(date -v-6m +%Y-%m-%d) \
-     --end $(date +%Y-%m-%d) > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/研报摘要_$(date +%Y%m%d).md
-
-   # 公告列表
-   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {股票代码} \
-     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/公告列表_$(date +%Y%m%d).md
-
-   # 公司一页纸（快速概览）
-   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 \
-     --stock "{股票代码}:{公司名}" \
-     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/公司一页纸_$(date +%Y%m%d).md
-
-   # 舆情热点
-   python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa \
-     --question "{公司名}近期有什么重大消息？近期股价走势和催化剂？" --mode Think \
-     > ~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai/舆情热点_$(date +%Y%m%d).md
+   **执行顺序与失败处理：**
+   ```
+   ① 创建 alphapai/ 目录
+   ② 依次执行下方 5 个命令，每个命令最多重试 3 次
+   ③ 每次执行后检查退出码：0 = 成功，非 0 = 失败
+   ④ 重试 3 次仍失败 → 在 Vault/alphapai/ 下创建「alphapai_失败_{命令名}.log」并记录错误信息，然后继续下一个命令
+   ⑤ 所有命令执行完毕后，验证 alphapai/ 目录是否包含「非空」文件（公司一页纸允许为空，不算失败）
+   ⑥ 验证通过后输出「✅ 雷达Agent数据收集完成」，方可进入后续 Agent
+   ⑦ 若验证发现路演纪要或研报摘要为空 → 必须重试（最多3次）→ 仍为空则标注「⚠️ 数据为空，待补充」
    ```
 
-   - 存入内容：
-     ```
-     alphapai/
-     ├── 路演纪要_{日期}.txt       ← transcript 命令自动保存
-     ├── 研报摘要_{日期}.md       ← recall --type report
-     ├── 公告列表_{日期}.md       ← report
-     ├── 舆情热点_{日期}.md       ← qa --mode Think
-     └── 公司一页纸_{日期}.md     ← agent --mode 2
-     ```
+   **精确命令（不可用伪命令，必须用真实脚本路径）：**
+   ```bash
+   ALPHAPAI=~/.claude/skills/alphapai-research/scripts/alphapai_client.py
+   OUT=~/Research/Vault_公司基本面Agent/11_公司列表/{拼音首字母}/{公司名}_{代码}/alphapai
+   DATE=$(date +%Y%m%d)
+
+   # ── 命令1：路演纪要全文（强制，3次重试，近6个月，最多10篇）──
+   # 保存路径: Vault_公司基本面Agent/.../alphapai/路演纪要_*.txt
+   # 用途: 作为背景材料注入后续Agent上下文（不写Raw仓库）
+   for i in 1 2 3; do
+     python3 $ALPHAPAI transcript \
+       --query "{公司名} {股票代码}" \
+       --path-prefix "11_公司列表/{拼音首字母}/{公司名}_{代码}" \
+       --start $(date -v-6m +%Y-%m-%d) \
+       --end $(date +%Y-%m-%d) && break
+     sleep 5
+   done || echo "⚠️ 路演纪要失败，请检查网络和API配额" >> "$OUT/alphapai_失败_transcript.log"
+
+   # ── 命令2：研报摘要（强制，3次重试，近6个月，最多10篇）──
+   # 用途: 作为背景材料注入后续Agent上下文（recall返回语义片段，非完整研报）
+   for i in 1 2 3; do
+     python3 $ALPHAPAI recall \
+       --query "{公司名}" --type report --no-cutoff \
+       --start $(date -v-6m +%Y-%m-%d) \
+       --end $(date +%Y-%m-%d) > "$OUT/研报摘要_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 研报摘要失败" >> "$OUT/alphapai_失败_recall.log"
+
+   # ── 命令3：公告列表（强制，3次重试）──
+   for i in 1 2 3; do
+     python3 $ALPHAPAI report --code {股票代码} \
+       > "$OUT/公告列表_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 公告列表失败" >> "$OUT/alphapai_失败_report.log"
+
+   # ── 命令4：舆情热点（强制，3次重试）──
+   for i in 1 2 3; do
+     python3 $ALPHAPAI qa \
+       --question "{公司名}近期有什么重大消息？近期股价走势和催化剂？" --mode Think \
+       > "$OUT/舆情热点_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 舆情热点失败" >> "$OUT/alphapai_失败_qa.log"
+
+   # ── 命令5：公司一页纸（强制，3次重试，--question必填）──
+   for i in 1 2 3; do
+     python3 $ALPHAPAI agent --mode 2 \
+       --question "{公司名}的公司一页纸" --stock "{股票代码}:{公司名}" \
+       > "$OUT/公司一页纸_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 公司一页纸失败" >> "$OUT/alphapai_失败_agent_mode2.log"
+
+   # ── 命令6：投资逻辑（强制，3次重试，--question格式固定）──
+   for i in 1 2 3; do
+     python3 $ALPHAPAI agent --mode 7 \
+       --question "{公司名}的投资逻辑" --stock "{股票代码}:{公司名}" \
+       > "$OUT/投资逻辑_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 投资逻辑失败" >> "$OUT/alphapai_失败_agent_mode7.log"
+
+   # ── 命令7：行业一页纸（强制，3次重试，--question格式固定）──
+   # ⚠️ --question 必须传 "{行业名}的行业一页纸" 格式，API 自动生成框架
+   for i in 1 2 3; do
+     python3 $ALPHAPAI agent --mode 11 \
+       --question "车载电源的行业一页纸" --industry 车载电源 \
+       > "$OUT/行业一页纸_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 行业一页纸失败" >> "$OUT/alphapai_失败_agent_mode11.log"
+
+   # ── 命令8：调研大纲（强制，3次重试，--question格式固定）──
+   for i in 1 2 3; do
+     python3 $ALPHAPAI agent --mode 3 \
+       --question "{公司名}的调研问题大纲" --stock "{股票代码}:{公司名}" \
+       > "$OUT/调研大纲_${DATE}.md" && break
+     sleep 5
+   done || echo "⚠️ 调研大纲失败" >> "$OUT/alphapai_失败_agent_mode3.log"
+   ```
+
+   **验证清单（必须全部通过方可进入后续 Agent）：**
+   ```
+   alphapai/
+   ├── 路演纪要_*.txt      ← 必须存在且 > 1KB
+   ├── 研报摘要_*.md      ← 必须存在且 > 1KB
+   ├── 公告列表_*.md     ← 必须存在（大小不限）
+   ├── 舆情热点_*.md      ← 必须存在且 > 1KB
+   ├── 公司一页纸_*.md   ← 必须存在且 > 1KB
+   ├── 投资逻辑_*.md    ← 必须存在且 > 1KB
+   ├── 行业一页纸_*.md  ← 必须存在且 > 1KB
+   └── 调研大纲_*.md    ← 必须存在且 > 1KB
+   ```
+
+   **失败输出示例（必须体现）：**
+   ```
+   ❌ 雷达Agent数据收集未完成：
+      路演纪要：⚠️ API失败（已重试3次），日志：alphapai/alphapai_失败_transcript.log
+      研报摘要：✅
+      公告列表：✅
+      舆情热点：✅
+      公司一页纸：⚠️ API失败（已重试3次），日志：alphapai/alphapai_失败_agent_mode2.log
+      投资逻辑：⚠️ API失败（已重试3次），日志：alphapai/alphapai_失败_agent_mode7.log
+      行业一页纸：⚠️ API失败（已重试3次），日志：alphapai/alphapai_失败_agent_mode11.log
+      调研大纲：⚠️ API失败（已重试3次），日志：alphapai/alphapai_失败_agent_mode3.log
+   → 请修复网络问题后重新执行投研，或手动补充缺失数据
+   ```
 
 ### Step 2：数据源优先级
 
@@ -174,11 +339,16 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
   → get_edb_data + search_edb：宏观/行业数据
 
 优先级 3：AlphaPai API（使用真实脚本路径）
-  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --stock "{代码}:{公司}"`
-  → 路演纪要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-3m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
-  → 研报摘要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司}" --type report --no-cutoff`
-  → 公告列表：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {代码}`
-  → 舆情热点：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa --question "{公司}近期有什么重大消息？" --mode Think`
+  → **注意**：`agent --mode 2` 必须传入 `--question` 参数，否则报错；`recall --type report` 返回的是召回索引（标题+来源），不是完整研报正文，勿高估可用性
+  → 路演纪要（增量）：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-1m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
+  → 公告+纪要+点评（增量）：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司} {代码}" --type ann,roadShow,comment --start $(date -v-1m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
+  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --question "{公司名}的公司一页纸" --stock "{代码}:{公司名}"`
+  → 投资逻辑：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 7 --question "{公司名}的投资逻辑" --stock "{代码}:{公司名}"`
+  → 行业一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 11 --question "车载电源的行业一页纸" --industry 车载电源`
+  → 调研大纲：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 3 --question "{公司名}的调研问题大纲" --stock "{代码}:{公司名}"`
+  → **注意**：`--question` 必须传模板格式（如"{公司名}的投资逻辑"），API 自动生成框架；`qa` 命令在 radar 场景下不跑（无上下文时只返回标题）
+  → 公告列表（索引）：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {代码}`
+  → 舆情热点：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa --question "{公司}近期有什么重大消息？近期股价走势和催化剂？" --mode Think`
 
 优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
   → 财务数据、行情估值、公司信息、宏观数据：
@@ -216,10 +386,14 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
   → search_news：最新新闻舆情
 
 优先级 3：AlphaPai API（使用真实脚本路径）
-  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --stock "{代码}:{公司}"`
-  → 路演纪要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-3m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
-  → 研报摘要：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司}" --type report --no-cutoff`
+  → **注意**：`agent --mode 2` 必须传入 `--question` 参数；`recall --type report` 返回召回索引而非正文
+  → 路演纪要（增量）：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript --query "{公司} {代码}" --path-prefix "11_公司列表/{拼音}/{公司}_{代码}" --start $(date -v-1m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
+  → 公告+纪要+点评（增量）：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall --query "{公司} {代码}" --type ann,roadShow,comment --start $(date -v-1m +%Y-%m-%d) --end $(date +%Y-%m-%d)`
   → 舆情热点：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa --question "{公司}近期有什么重大消息？" --mode Think`
+  → 公司一页纸：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 --question "{公司名}的公司一页纸" --stock "{代码}:{公司名}"`
+  → 投资逻辑：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 7 --question "{公司名}的投资逻辑" --stock "{代码}:{公司名}"`
+  → 调研大纲：`python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 3 --question "{公司名}的调研问题大纲" --stock "{代码}:{公司名}"`
+  → **注意**：`--question` 必须传模板格式（如"{公司名}的投资逻辑"），API 自动生成框架
 
 优先级 3.5：东方财富妙想（iFind 限流/失效时启用）
   → 财务数据、行情估值：
@@ -275,6 +449,10 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
 | 近期公告列表（10条） | AlphaPai report | AlphaPai report | 列表 | 缓存24小时 |
 | 路演纪要（近3个月） | AlphaPai recall --type roadShow | AlphaPai recall --type roadShow | Markdown文本 | 缓存7天；按时间窗口增量拉取 |
 | 券商研报摘要 | AlphaPai recall --type report | AlphaPai recall --type report | Markdown文本 | 缓存7天；按时间窗口增量拉取 |
+| 公司一页纸 | AlphaPai agent --mode 2 | AlphaPai agent --mode 2 | Markdown文本 | 缓存7天 |
+| 投资逻辑 | AlphaPai agent --mode 7 | AlphaPai agent --mode 7 | Markdown文本 | 缓存7天 |
+| 行业一页纸 | AlphaPai agent --mode 11 | — | Markdown文本 | 缓存7天 |
+| 调研大纲 | AlphaPai agent --mode 3 | AlphaPai agent --mode 3 | Markdown文本 | 缓存7天 |
 | 业绩点评 | AlphaPai agent --mode 1（如有报告ID） | AlphaPai agent --mode 1 | Markdown文本 | 缓存7天 |
 | 宏观/行业数据 | iFind EDB | 不适用 | 结构化dict | 缓存7天 |
 | 舆情/热点 | AlphaPai qa + iFind新闻 | AlphaPai qa + iFind新闻 | Markdown文本 | 缓存12小时 |
@@ -303,13 +481,17 @@ cat ~/.claude/skills/alphapai-research/config.json | grep api_key
 3. 【公告列表】✅ 已获取（来源：AlphaPai，共10条）
 4. 【路演纪要】✅ 已获取（来源：AlphaPai，共X条）
 5. 【研报摘要】✅ 已获取（来源：AlphaPai，共X条）
-6. 【技术行情数据】✅ 已获取（来源：iFind get_stock_performance）
+6. 【公司一页纸】✅ 已获取（来源：AlphaPai agent --mode 2）
+7. 【投资逻辑】✅ 已获取（来源：AlphaPai agent --mode 7）
+8. 【行业一页纸】✅/⚠️ 已获取/未获取（来源：AlphaPai agent --mode 11，仅A股）
+9. 【调研大纲】✅ 已获取（来源：AlphaPai agent --mode 3）
+10. 【技术行情数据】✅ 已获取（来源：iFind get_stock_performance）
    - 近5日涨跌幅、换手率
    - 最新融资融券余额及近期变化趋势
-7. 【宏观数据】✅/⚠️ 未获取（原因：...）
-8. 【舆情热点】✅ 已获取（来源：AlphaPai+iFind新闻）
-9. 【本地文件】✅/⚠️ 已有{文件名}，建议优先使用
-10. 【港交所披露】✅/⚠️ 已下载/年报缺失待补全
+10. 【宏观数据】✅/⚠️ 未获取（原因：...）
+11. 【舆情热点】✅ 已获取（来源：AlphaPai+iFind新闻）
+12. 【本地文件】✅/⚠️ 已有{文件名}，建议优先使用
+13. 【港交所披露】✅/⚠️ 已下载/年报缺失待补全
 
 ### 关键数据摘要
 （从收集的数据中提取最重要信息，供后续Agent快速参考）
@@ -420,32 +602,32 @@ Vault_公司基本面Agent/S-Z/中芯国际_688981/
 python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py transcript \
   --query "{公司名称} {股票代码} {纪要关键词}" \
   --path-prefix "11_公司列表/{拼音首字母}/{公司名}_{股票代码}" \
-  --start $(date -v-3m +%Y-%m-%d) \
+  --start $(date -v-1m +%Y-%m-%d) \
   --end $(date +%Y-%m-%d)
 ```
 
-> **说明**：`--path-prefix` 由 Step 1.5 确认的拼音首字母和公司文件夹名拼接而成（如 `11_公司列表/Z/中芯国际_688981`），内部固定调用 `recall --type roadShow --no-cutoff`，自动拼接 chunks 保存完整原文。不再使用裸 `recall` 命令获取纪要。
+> **说明**：`--path-prefix` 由 Step 1.5 确认的拼音首字母和公司文件夹名拼接而成（如 `11_公司列表/Z/中芯国际_688981`），内部固定调用 `recall --type roadShow --no-cutoff`，自动拼接 chunks 保存。**注意**：返回的是语义搜索的碎片化 chunks，不是完整原始文档，字数通常在数百字量级。
 
-### 研报检索
+### 公告+纪要+点评检索（增量）
 ```bash
 python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py recall \
-  --query "{公司名称}" \
-  --type report \
-  --no-cutoff \
-  --start $(date -v-6m +%Y-%m-%d) \
+  --query "{公司名称} {股票代码}" \
+  --type ann,roadShow,comment \
+  --start $(date -v-1m +%Y-%m-%d) \
   --end $(date +%Y-%m-%d)
 ```
 
-### 公告列表
-```bash
-python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py report --code {股票代码}
-```
+> **注意**：`recall` 返回的是**召回索引列表**（标题+来源片段），不是完整研报/公告正文。`ann`=公告，`roadShow`=路演纪要，`comment`=机构点评。这是 `incremental_scan.py` 实际使用的调用方式，与 `--type report` 不同。
 
-### 公司一页纸（快速概览）
+### 公司多维分析（Agent modes 1-11）
 ```bash
+# 并行跑7个mode: 1=业绩点评 2=公司一页纸 3=调研大纲 5=主题选股 7=投资逻辑 8=可比公司 9=观点Challenge 11=行业一页纸
 python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py agent --mode 2 \
+  --question "{公司名}的公司一页纸" \
   --stock {股票代码}:{公司名称}
 ```
+
+> **重要**：不同 mode 需要不同必填参数——mode 1（业绩点评）需要 `--report-id`/`--report-period`；mode 11（行业一页纸）需要 `--industry`。雷达场景下建议只跑 mode 2，其余 mode 按需单独调用。`--question` 是所有 mode 的必填参数，缺少会报错。
 
 ### 舆情热点
 ```bash
@@ -453,6 +635,8 @@ python3 ~/.claude/skills/alphapai-research/scripts/alphapai_client.py qa \
   --question "{公司名称}近期有什么重大消息？近期股价走势和催化剂？" \
   --mode Think
 ```
+
+> **唯一真正有用的命令**：`qa` 返回完整分析正文 + 引用来源，是 AlphaPai 五条命令中唯一一个能提供实质性内容的。其余命令均受 API 设计限制，无法获取原始文档正文。
 
 ## iFind 调用规范
 
@@ -632,6 +816,137 @@ get_stock_performance({
 
 **无需等待所有数据收集完成即可并行启动后续Agent**，已收集的数据即时可用。
 
+## 定时监控脚本
+
+本 Agent 支持全自动被动监控，无需用户指令即可定时扫描持仓公司增量数据。
+
+### 脚本清单
+
+| 脚本 | 路径 | 触发频率 | 功能 |
+|------|------|---------|------|
+| `incremental_scan.py` | `~/.claude/skills/rl-radar-agent/scripts/incremental_scan.py` | 每天 15:00 / 21:00 | AlphaPai 持仓扫描 + 纪要/研报增量 → Raw仓库 + SMTP 汇总邮件 |
+| `email_incremental_scan.py` | `~/.claude/skills/rl-radar-agent/scripts/email_incremental_scan.py` | 每 4 小时 | iFinD 邮件推送 → Raw 仓库 |
+| `confirm_handler.py` | `~/.claude/skills/rl-radar-agent/scripts/confirm_handler.py` | 每 5 分钟 | 重大事件确认 → 纪要追踪 → 邮件反馈 |
+
+> 注：`incremental_scan.py` 和 `email_incremental_scan.py` 由 LaunchAgent `com.rl.hourly-scan` 统一调度，每 4 小时运行一次，合并发送一封汇总邮件。
+
+### incremental_scan.py — 持仓增量扫描
+
+**功能：**
+1. 从基金经理 Agent Vault 动态加载所有组合持仓（润铭 + CIF，共 76+ 家）
+2. AlphaPai recall：公告 + 路演纪要 + 机构点评（近 1 天）
+3. 分类：重大事件 vs 一般增量 vs 空数据（静默跳过）
+4. 有有效内容才自动落入 Vault + 触发 Wiki ingest
+5. 汇总邮件：只列出有实际内容的公司，统计"查询 X 家 / Y 家有数据 / Z 家无数据"
+
+**持仓来源（v1.13 动态加载）：**
+- 路径：`~/Research/Vault_基金经理Agent/润铭.md` + `CIF.md`
+- 通过 `portfolio_loader.py` 实时读取，组合持仓变更后自动生效
+- 空数据（AlphaPai 返回"召回数据 0 条"）不创建文件，邮件中不单独列出
+
+**SMTP 发送（v1.8 新增）：**
+- 不依赖 qq-email MCP（Claude Code 桌面应用未加载）
+- 使用 Python `smtplib` 直连 SMTP：`smtp.qq.com:587`
+- 授权码：`gesrbiwaipzpbhhf`
+
+**LaunchAgent：** `com.rl.hourly-scan`（每天 15:00 / 21:00）
+
+### email_incremental_scan.py — iFinD 邮件增量扫描（v1.8 新增核心功能）
+
+**功能：**
+1. 每小时通过 IMAP 拉取 QQ邮箱 收件箱
+2. 解析 iFinD HTML 邮件（公司公告/财经新闻/股东会提示）
+3. 按持仓公司列表过滤，只处理相关公司
+4. 写入 Raw 仓库：`raw/announcements/`、`raw/notes/`
+5. 写 `pending_ingest/` 标记文件触发 Wiki ingest
+6. 同步 `last_email_sync.json` 记录最新 UID
+
+**MCP 调用方式（关键）：**
+- 使用 heredoc 方式解决 `npx mcp-email` 的 stdin 竞争问题：
+```bash
+bash -c 'cat << 'EOFJSON' | npx mcp-email
+{"jsonrpc":"2.0",...}
+EOFJSON'
+```
+- 响应解析：匹配 `{"result` 或 `{"jsonrpc` 或 `{"error` 前缀
+
+**UID 同步逻辑：**
+- `uid < last_uid`（严格小于，等于时不重复处理）
+- 首次运行：同步全部历史邮件
+- 后续运行：只同步新邮件
+
+**iFinD 邮件解析：**
+- 自定义 `iFinDMailParser(HTMLParser)` 提取三类内容：
+  - 公司公告 → `raw/announcements/ifind_announcement_*.md`
+  - 财经新闻 → `raw/announcements/ifind_news_*.md`
+  - 股东会提示 → `raw/notes/ifind_tips_*.md`
+
+**Cron 任务 ID：** `7d822924`（每小时）
+
+**配置：**
+- QQ邮箱授权码：`gesrbiwaipzpbhhf`
+- IMAP 服务器：`imap.qq.com:993`
+- MCP 配置：`~/.claude/mcp.json`
+
+### confirm_handler.py — 重大事件确认处理器（v1.12 新增）
+
+**功能：**
+1. 每 5 分钟通过 IMAP 读取 QQ 邮箱收件箱
+2. 检测用户回复的"确认"邮件（关键词：确认/是/ok/跟踪）
+3. 从邮件主题/正文解析确认的公司名和事件
+4. 查找对应公司的增量文件（Vault alphapai/ + raw/announcements/ + raw/reports/）
+5. 写入 `confirmed_events.json` 状态文件（status: pending → processing → done）
+6. 发送"处理中"邮件给用户
+7. 调用 `run_transcript_tracking.py` 自动收集资料并生成纪要追踪报告
+8. 发送"追踪完成"结果邮件，附带报告路径
+
+**状态文件：**
+```
+~/Research/Vault_共享知识库/raw/confirmed_events.json
+```
+
+**确认邮件格式：**
+用户回复增量扫描邮件或在任意邮件中写：
+- `确认 中芯国际`
+- `确认 中芯国际 年报发布`
+- `跟踪 宁德时代`
+- `是`
+
+**链路流程：**
+```
+用户收到邮件: 重大事件待确认: 中芯国际年报发布
+      ↓
+用户回复邮件: "确认 中芯国际"
+      ↓
+confirm_handler.py (每5分钟Cron)
+      ↓ 解析确认 → 查找增量文件 → 写状态文件
+发送"处理中"邮件
+      ↓
+run_transcript_tracking.py
+      ↓ 扫描Vault资料 + AlphaPai获取 + 生成报告
+发送"追踪完成"邮件 + 报告路径
+      ↓
+更新 confirmed_events.json (status=done)
+```
+
+**Cron 任务 ID：** 新建（每 5 分钟）
+
+---
+
+### Raw → Wiki 自动化链路
+
+```
+iFinD 邮件（每小时）
+  ↓ IMAP 拉取
+email_incremental_scan.py
+  ↓ 解析 + 持仓过滤
+Raw 仓库（announcements/notes/）
+  ↓ pending_ingest 标记
+rl-wiki-ingest Cron（每4小时）
+  ↓ 自动分拣 + Wiki ingest
+Wiki 页面增量更新 + log.md 记录
+```
+
 ## 注意事项
 
 1. **不总结、不截断**：AlphaPai返回的原始内容完整输出
@@ -646,6 +961,15 @@ get_stock_performance({
 
 ---
 
-*版本：v1.9 | 2026-04-13*
-*数据源：alphapai-research + iFind MCP + 东方财富妙想 + rabyte + 本地文件 + listed-company-reports skill + sina-stock-price*
-*核心变更：v1.9 新增新浪财经作为实时股价兜底数据源；v1.8 废弃 download_reports_v2.py（HKEX RSS已死），改用 listed-company-reports skill*
+---
+
+## Bug Fix Record
+
+| 日期 | Bug | 修复说明 |
+|------|-----|----------|
+| 2026-04-21 | AlphaPai步骤静默跳过 | Step 4（AlphaPai收集）无重试、无验证，失败时静默跳过后续Agent，导致alphapai/目录完全缺失。新增强制执行（最多3次重试）+ 退出码检查 + 空文件验证 + 失败log输出 + 验证清单，未通过时阻止后续Agent执行 |
+
+---
+
+*版本：v1.17 | 2026-04-21*
+*核心变更：v1.17 AlphaPai agent多mode并行（1-11）、移除qa；v1.16 recall改用ann,roadShow,comment、agent加--question；v1.15 AlphaPai强制执行+重试+验证；v1.13 持仓动态加载（润铭+CIF）、空数据静默跳过、邮件每4小时一次只列有内容*
