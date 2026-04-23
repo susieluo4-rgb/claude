@@ -467,6 +467,7 @@ for r in wb.active.iter_rows():
 | L列行73/74无评论 | `ind_metric_kw` 缺 `'penetration'` | 添加 `'penetration': '渗透率'` |
 | L列177+全是旧公司数据 | `ql_section_block` 解析失败 + 硬编码 `ql_comment_map` | 改用 `parse_ql_table_block` 从表格提取 |
 | 精度不对（如Market Size小数） | `round()` 精度问题 | Market Size 用 `round(num*100)` 不带小数 |
+| 邮件附件变成 .bin 文件 | 中文文件名 `filename*=UTF-8''` 语法不正确，QQ邮箱无法解析 | 使用 RFC 5987 格式：`filename=('utf-8', '', quote(fname, safe=''))`，参考 `batch_score.py` 最新代码 |
 
 ---
 
