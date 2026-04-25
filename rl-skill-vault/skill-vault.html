@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL Skill Vault</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2128;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --tag-bg: #388bfd26;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header h1 span { color: var(--accent); }
+        .stats { display: flex; gap: 32px; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .toolbar {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 32px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box { flex: 1; min-width: 200px; max-width: 400px; }
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .search-box input:focus { outline: none; border-color: var(--accent); }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .filter-btn {
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .last-updated {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 32px 40px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .card-name { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .card-version {
+            font-size: 12px;
+            padding: 4px 8px;
+            background: var(--tag-bg);
+            color: var(--accent);
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .card-date { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+        .card-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-refs { border-top: 1px solid var(--border); padding-top: 12px; }
+        .card-refs-title { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ref-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 8px;
+            margin: 2px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+        .ref-tag.referenced-by { background: #3fb95022; color: var(--success); }
+        .ref-tag.references { background: #d2992222; color: var(--warning); }
+
+        .hint {
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>RL <span>Skill Vault</span></h1>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="total-skills">--</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="total-refs">--</div>
+                    <div class="stat-label">References</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <input type="text" id="search" placeholder="Search skills...">
+        </div>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="core">Core</button>
+        <button class="filter-btn" data-filter="utility">Utility</button>
+        <button class="filter-btn" data-filter="data">Data</button>
+        <span class="last-updated" id="last-updated"></span>
+    </div>
+
+    <div class="container">
+        <div class="hint">重新触发 Skill 可更新最新列表</div>
+        <div id="grid" class="grid"></div>
+    </div>
+
+    <script>
+        // Skills data injected at generation time
+        const SKILLS_DATA = [
+    {
+        name: "rl-archive",
+        version: "1.0",
+        created: "",
+        description: "Session 归档 Skill",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "RL-投研团队进度分析",
+        version: "2.0",
+        created: "",
+        description: "扫描投研Vault，生成投研团队整体进度报告",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "RL-每日总结",
+        version: "1.0",
+        created: "",
+        description: "从归档档案生成每日总结报告",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "RL纪要追踪分析",
+        version: "1.0",
+        created: "",
+        description: "会议纪要追踪对比 Skill",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "chart-craft-plus",
+        version: "1.0",
+        created: "",
+        description: "AI 全能图表生成器",
+        type: "utility",
+        referencedBy: ["\u6295\u7814\u56e2\u961f"],
+        references: []
+    },
+    {
+        name: "faster-whisper",
+        version: "1.5.1",
+        created: "",
+        description: "Local speech-to-text using faster-whisper",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "json-canvas",
+        version: "1.0",
+        created: "",
+        description: "Create and edit Obsidian JSON Canvas files",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "listed-company-reports",
+        version: "1.0",
+        created: "",
+        description: "下载上市公司年报、半年报、季度报告",
+        type: "utility",
+        referencedBy: ["\u6295\u7814\u56e2\u961f"],
+        references: []
+    },
+    {
+        name: "notebooklm",
+        version: "1.0",
+        created: "",
+        description: "Complete API for Google NotebookLM",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "ppt-master",
+        version: "1.0",
+        created: "",
+        description: "AI驱动的PPT生成工具",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "qq-email",
+        version: "1.0",
+        created: "",
+        description: "QQ邮箱 MCP 技能",
+        type: "data",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-alphapai",
+        version: "1.1",
+        created: "",
+        description: "RL投研包 — 基于Alpha派API",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "RL-company-research-model-V2.4",
+        version: "1.0",
+        created: "",
+        description: "自动化A股/港股公司研究建模工具",
+        type: "utility",
+        referencedBy: [],
+        references: ["\u6295\u7814\u56e2\u961f"]
+    },
+    {
+        name: "rl-daily-report",
+        version: "1.0",
+        created: "",
+        description: "Daily Report - 每日日报",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-esg-agent",
+        version: "1.1",
+        created: "",
+        description: "ESG 评论助手",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-html-report-builder",
+        version: "4.2",
+        created: "",
+        description: "投研报告HTML报告构建工具",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-pending-check",
+        version: "1.0",
+        created: "",
+        description: "投研系统待确认事件检查器",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-portfolio-benchmark",
+        version: "2.0",
+        created: "",
+        description: "投研组合净值 vs 宽基指数对比分析",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-portfolio-construct",
+        version: "2.0",
+        created: "",
+        description: "投研组合构建工具",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-quality-inspector",
+        version: "1.0",
+        created: "",
+        description: "投研系统核查员Agent — 质检层",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-earnings-review",
+        version: "1.3",
+        created: "2026-04-23",
+        description: "RL投研业绩点评专用Skill。触发词：业绩点评、点评季报、分析季报、年报点评。自动完成(1)下载财报PDF (2)AlphaPai mode 1完整调用 (3)AKShare历史序列分析 (4)综合点评+微信版v2.0输出。盈利预测必须综合公司指引、券商一致预期、纪要交叉验证、财务模型等多来源，禁止拍脑袋估算。输出格式：{公司名}（{代码}），{报告期}业绩，{Beat/Miss/In-line} + ++核心摘要 + ++财务数据摘要 + ++估值情况（PE+PEG判断）。",
+        type: "core",
+        referencedBy: [],
+        references: ["listed-company-reports", "alphapai-research", "rl-company-research-model"]
+    },
+    {
+        name: "rl-radar-agent",
+        version: "1.13",
+        created: "",
+        description: "投研系统雷达Agent — 多数据源信息收集层",
+        type: "core",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-skill-vault",
+        version: "1.0",
+        created: "2026-04-20",
+        description: "技能展示页面",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-value-chain",
+        version: "1.0",
+        created: "",
+        description: "生成公司产业链 Value Chain 画布",
+        type: "utility",
+        referencedBy: ["\u6295\u7814\u56e2\u961f"],
+        references: []
+    },
+    {
+        name: "rl-wiki-lint",
+        version: "1.0",
+        created: "",
+        description: "Wiki健康检查Skill",
+        type: "utility",
+        referencedBy: [],
+        references: ["rl-wiki-ingest"]
+    },
+    {
+        name: "rl-wiki-query",
+        version: "1.0",
+        created: "",
+        description: "Wiki查询Skill — 基于结构化Wiki页面",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-workbench",
+        version: "1.0",
+        created: "",
+        description: "投研工作台 — 浏览器一键触发 Skills",
+        type: "utility",
+        referencedBy: ["rl-workbench-cmd"],
+        references: []
+    },
+    {
+        name: "rl-workbench-cmd",
+        version: "1.0",
+        created: "",
+        description: "打开 RL Workbench 浏览器界面",
+        type: "utility",
+        referencedBy: [],
+        references: ["rl-workbench"]
+    },
+    {
+        name: "rl-workbench-server",
+        version: "1.0",
+        created: "",
+        description: "RL Workbench 本地HTTP服务",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "sina-stock-price",
+        version: "1.0",
+        created: "",
+        description: "新浪财经实时行情查询",
+        type: "data",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "wechat-article-fetch",
+        version: "1.0",
+        created: "",
+        description: "微信公众号文章抓取工具",
+        type: "data",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "wechat-video-download",
+        version: "1.0",
+        created: "",
+        description: "微信视频号下载工具",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-wiki-ingest",
+        version: "2.3",
+        created: "2026-04-12",
+        description: "Wiki 知识库维护引擎",
+        type: "utility",
+        referencedBy: ["rl-wiki-lint"],
+        references: []
+    },
+    {
+        name: "rl-xiaoye",
+        version: "1.0",
+        created: "2026-04-25",
+        description: "小野 — 您的私人助理",
+        type: "personal-assistant",
+        referencedBy: [],
+        references: ["rl-email-assistant", "rl-portfolio-monitor", "投研团队", "rl-daily-report"]
+    },
+    {
+        name: "rl-excel-model-beautifier",
+        version: "1.0",
+        created: "2026-04-10",
+        description: "将基础财务模型 Excel 转换为专业投行风格",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-portfolio-monitor",
+        version: "2.0",
+        created: "2026-04-09",
+        description: "持仓监控告警编排层",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "alphapai-research",
+        version: "1.1",
+        created: "2026-04-08",
+        description: "Alpha派金融投研平台API技能",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-code-javascript",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Write JavaScript code in n8n Code nodes",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-code-python",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Write Python code in n8n Code nodes",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-expression-syntax",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Validate n8n expression syntax",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-mcp-tools-expert",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Expert guide for using n8n-mcp MCP tools",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-node-configuration",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Operation-aware node configuration guidance",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-validation-expert",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Interpret validation errors",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "n8n-workflow-patterns",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "Proven workflow architectural patterns",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "投研团队",
+        version: "1.0",
+        created: "2026-04-06",
+        description: "多Agent智能投研协调层",
+        type: "core",
+        referencedBy: ["RL-company-research-model-V2.4"],
+        references: ["chart-craft-plus", "listed-company-reports", "rl-value-chain"]
+    },
+    {
+        name: "RL-系统录入自动化 v1.5",
+        version: "1.5",
+        created: "2026-04-01",
+        description: "将 ESG / Industry / Porter / QL&RF 四个 TXT 分析报告自动填入打分模板 Excel",
+        type: "utility",
+        referencedBy: [],
+        references: []
+    },
+    {
+        name: "rl-完整性检测",
+        version: "1.0",
+        created: "2026-04-21",
+        description: "Vault 文件夹完整性监控 — 扫描持仓公司年报/半年报/季报/MD/HTML/图表/模型完整性，启动 HTTP Dashboard",
+        type: "system",
+        referencedBy: [],
+        references: []
+    }
+  ];
+
+        let filteredSkills = [...SKILLS_DATA];
+
+        function render(filter = 'all', search = '') {
+            const grid = document.getElementById('grid');
+
+            filteredSkills = SKILLS_DATA.filter(s => {
+                if (filter !== 'all' && s.type !== filter) return false;
+                if (search) {
+                    const q = search.toLowerCase();
+                    return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q);
+                }
+                return true;
+            });
+
+            document.getElementById('total-skills').textContent = SKILLS_DATA.length;
+            document.getElementById('total-refs').textContent = SKILLS_DATA.reduce((sum, s) => sum + (s.references?.length || 0), 0);
+            document.getElementById('last-updated').textContent = 'Updated: 2026-04-24 08:30';
+
+            if (filteredSkills.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)">No skills found</div>';
+                return;
+            }
+
+            grid.innerHTML = filteredSkills.map(skill => {
+                const refByHtml = (skill.referencedBy?.length)
+                    ? `<div class="card-refs-title">Referenced By</div>${skill.referencedBy.map(n => `<span class="ref-tag referenced-by">${n}</span>`).join('')}`
+                    : '';
+                const refsToHtml = (skill.references?.length)
+                    ? `<div class="card-refs-title" style="margin-top:8px">References</div>${skill.references.map(n => `<span class="ref-tag references">${n}</span>`).join('')}`
+                    : '';
+
+                return `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-name">${skill.name}</div>
+                        <div class="card-version">v${skill.version}</div>
+                    </div>
+                    <div class="card-date">Created: ${skill.created}</div>
+                    <div class="card-description">${skill.description}</div>
+                    ${refByHtml || refsToHtml ? `<div class="card-refs">${refByHtml}${refsToHtml}</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        document.getElementById('search').addEventListener('input', e => {
+            const act = document.querySelector('.filter-btn.active').dataset.filter;
+            render(act, e.target.value);
+        });
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                render(btn.dataset.filter, document.getElementById('search').value);
+            });
+        });
+
+        render();
+    </script>
+</body>
+</html>
