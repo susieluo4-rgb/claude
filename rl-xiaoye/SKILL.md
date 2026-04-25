@@ -163,7 +163,13 @@ rl-xiaoye/
 
 小野通过封装层调用现有 Agent：
 
-- **邮件** → `rl-email-assistant` (email_assistant.py)
+### 邮件模块 (三个数据源)
+- **qq-email** (MCP) — 主要数据源，QQ邮箱
+- **outlook-microsoft** (Script) — 世纪互联 Outlook 邮件 + 日历
+- **rl-email-assistant** (Script) — 备用邮件助理
+
+### 其他模块
+- **日历** → Google Calendar MCP
 - **持仓** → `rl-portfolio-monitor` (portfolio_monitor.py)
 - **投研** → `投研团队` (research_team.py)
 - **日报** → `rl-daily-report` (daily_report_module.py)
