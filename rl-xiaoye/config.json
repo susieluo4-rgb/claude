@@ -1,0 +1,38 @@
+{
+  "name": "小野",
+  "version": "1.0",
+  "notification_enabled": true,
+  "language": "zh-CN",
+  "response_style": "concise",
+  "email": {
+    "digest_time": "08:00",
+    "max_digest_count": 20,
+    "vip_senders": [
+      "rocky.luo@binyuancapital.com"
+    ]
+  },
+  "portfolio": {
+    "alert_threshold": {
+      "price_drop": 5.0,
+      "price_rise": 8.0,
+      "volume_spike": 3.0
+    },
+    "watched_portfolios": ["润铭", "CIF"]
+  },
+  "calendar": {
+    "default_meeting_duration": 60,
+    "reminder_minutes": 15
+  },
+  "research": {
+    "auto_quality_check": true,
+    "report_format": "html"
+  },
+  "feishu": {
+    "enabled": true,
+    "webhook": ""
+  },
+  "daily_report": {
+    "auto_send": false,
+    "recipients": ["179003734@qq.com"]
+  }
+}
