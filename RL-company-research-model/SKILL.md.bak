@@ -231,12 +231,11 @@ def ifind_call(tool_name, query):
 
 ---
 
-## 数据分级表（v2.1）
+## 数据分级表（v2.0）
 
 | 优先级 | 数据源 | 适用场景 | 说明 |
 |--------|--------|----------|------|
 | **P0** | iFind API | 历史三张表、季度数据、一致预期 | iFind 可用时优先使用 |
-| **P0.5** | ftshare 免费接口 | iFind 补充：三张表完整版（附费用明细+YoY）、业绩快报/预告、股东变化/质押、新闻舆情 | market.ft.tech 无需 Key，无调用限制 |
 | **P1** | 本地 PDF | 分部收入/毛利率（必须）、iFind 失败时的历史数据 | 分部数据无论如何都从 PDF 提取 |
 | **P2** | 东方财富妙想 | iFind 限流/失败 | 最后兜底 |
 | **P3** | AlphaPai | 一致预期（辅助） | 仅用于预测，不用于历史数据 |
@@ -244,52 +243,7 @@ def ifind_call(tool_name, query):
 
 **⚠️ 历史财务数据必须来自 P0-P2**。P3/P4 不可用于填充已披露的历史数据，只能用于预测假设和定性评估。
 
-**冲突处理**：P0 > P0.5 > P1 > P2。当 API 数据与财报冲突时，以财报为准。
-
-### P0.5 ftshare 接口说明
-
-ftshare 6个 skill 基于 `market.ft.tech` 免费直连 HTTP API，无需 Key。
-
-```python
-import sys
-sys.path.insert(0, "/Users/zhuang225/.claude/skills/rl-radar-agent/scripts")
-
-# 三张表完整版（含销售/管理/财务费用 + YoY，字段多于 iFind）
-from ftshare_financials import fetch_all_three_tables
-data = fetch_all_three_tables("300750.SZ")
-
-# 港股K线/估值（港股持仓公司）
-from ftshare_hk import fetch_candlesticks, fetch_valuation
-candles = fetch_candlesticks("00700.HK", days=30)
-
-# 业绩快报/预告（可比财报提前1-2月获取）
-subprocess.run([
-    "python3", "/Users/zhuang225/.claude/skills/ftshare-performance-data/run.py",
-    "stock-performance-forecast-single-stock-all-periods", "--stock-code", "300750.SZ"
-])
-
-# 新闻舆情（近半月，免费无限制）
-subprocess.run([
-    "python3", "/Users/zhuang225/.claude/skills/ftshare-news-data/run.py",
-    "semantic-search-news", "--query", "宁德时代", "--limit", "5"
-])
-```
-
-**ftshare 三张表 vs iFind 对比**：
-
-| 维度 | ftshare | iFind |
-|------|---------|-------|
-| 利润表字段 | 27个，含营业利润/净利润/归母+费用明细 | 更多，含税金及附加/所得税 |
-| 税金及附加 | 需推导 | 直接返回 |
-| 所得税 | 需推导 | 直接返回 |
-| 营业外收支 | 缺 | 完整 |
-| 少多数股东损益 | 需推导 | 直接返回 |
-
-**使用原则**：
-- iFind 可用时以 iFind 为主，ftshare 仅作补充校验
-- ftshare 可补充费用明细（销售/管理/财务费用 + YoY）用于费用率趋势分析
-- **中间推导项（税金及附加、所得税、少数股东损益）以 iFind 或 PDF 为准**
-- 业绩快报/预告可比财报提前 1-2 个月，用于提前感知业绩趋势
+**冲突处理**：P0 > P1 > P2。当 API 数据与财报冲突时，以财报为准。
 
 ---
 
@@ -802,14 +756,8 @@ ASM_ROW = {
 IS_ROW = {
     'revenue': 4, 'yoy': 5, 'cogs': 6, 'gp': 7, 'gm': 8,
     'selling': 10, 'admin': 11, 'rd': 12, 'rd_rate': 13, 'finance': 14,
-    'other_income': 15,
-    'op': 16, 'op_margin': 17,
-    'non_op_income': 18, 'non_op_expense': 19,
-    'pbt': 20, 'tax': 21,
-    'ebitda': 22, 'ebitda_margin': 23,
-    'np': 24, 'minority_np': 25,
-    'np_attr': 26, 'np_attr_yoy': 27, 'np_margin': 28,
-    'tax_rate': 29, 'eps': 30,
+    'op': 16, 'op_margin': 17, 'ebitda': 18, 'ebitda_margin': 19,
+    'np': 21, 'np_attr': 22, 'np_attr_yoy': 23, 'np_margin': 24, 'eps': 25,
 }
 
 # 【资产负债表】行号
@@ -881,46 +829,23 @@ for yr in PRED_YEARS:
     ws_is.cell(IS_ROW['finance'], col).value = \
         f'=-模型假设!${ac(yr)}${ASM_ROW["finance_cost"]}'
 
-    # 其他收益 = 0（预测期）
-    ws_is.cell(IS_ROW['other_income'], col).value = '=0'
-
-    # 营业利润 = 毛利润 + 各费用 + 其他收益（各费用已含负号）
+    # 营业利润 = 毛利润 + 各费用（各费用已含负号）
     ws_is.cell(IS_ROW['op'], col).value = (
         f'={dc(yr)}{IS_ROW["gp"]}'
         f'+{dc(yr)}{IS_ROW["selling"]}+{dc(yr)}{IS_ROW["admin"]}'
         f'+{dc(yr)}{IS_ROW["rd"]}+{dc(yr)}{IS_ROW["finance"]}'
-        f'+{dc(yr)}{IS_ROW["other_income"]}'
     )
-
-    # 营业外收入/支出 = 0（预测期）
-    ws_is.cell(IS_ROW['non_op_income'], col).value = '=0'
-    ws_is.cell(IS_ROW['non_op_expense'], col).value = '=0'
-
-    # 利润总额 = 营业利润 + 营业外收支
-    ws_is.cell(IS_ROW['pbt'], col).value = (
-        f'={dc(yr)}{IS_ROW["op"]}'
-        f'+{dc(yr)}{IS_ROW["non_op_income"]}+{dc(yr)}{IS_ROW["non_op_expense"]}'
-    )
-
-    # 所得税 = 利润总额 × 税率
-    ws_is.cell(IS_ROW['tax'], col).value = \
-        f'={dc(yr)}{IS_ROW["pbt"]}*模型假设!${ac(yr)}${ASM_ROW["tax_rate"]}'
-
     # EBITDA = 营业利润 + D&A
     ws_is.cell(IS_ROW['ebitda'], col).value = \
         f'={dc(yr)}{IS_ROW["op"]}+模型假设!${ac(yr)}${ASM_ROW["da"]}'
 
-    # 净利润 = 利润总额 - 所得税
+    # 净利润（合并）= 营业利润 × (1 - 税率)
     ws_is.cell(IS_ROW['np'], col).value = \
-        f'={dc(yr)}{IS_ROW["pbt"]}-{dc(yr)}{IS_ROW["tax"]}'
+        f'={dc(yr)}{IS_ROW["op"]}*(1-模型假设!${ac(yr)}${ASM_ROW["tax_rate"]})'
 
-    # 少数股东损益 = 净利润 × (1 - 归母比例)
-    ws_is.cell(IS_ROW['minority_np'], col).value = \
-        f'={dc(yr)}{IS_ROW["np"]}*(1-模型假设!${ac(yr)}${ASM_ROW["parent_ratio"]})'
-
-    # 归母净利润 = 净利润 - 少数股东损益
+    # 归母净利润 = 净利润 × 归母比例
     ws_is.cell(IS_ROW['np_attr'], col).value = \
-        f'={dc(yr)}{IS_ROW["np"]}-{dc(yr)}{IS_ROW["minority_np"]}'
+        f'={dc(yr)}{IS_ROW["np"]}*模型假设!${ac(yr)}${ASM_ROW["parent_ratio"]}'
 
     # EPS = 归母净利润 / 总股本
     ws_is.cell(IS_ROW['eps'], col).value = \
